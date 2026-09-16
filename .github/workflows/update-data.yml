@@ -29,6 +29,7 @@ jobs:
       - name: Fetch data
         env:
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+          PYTHONUNBUFFERED: "1"
         run: python -m pipeline.run
 
       - name: Commit updated data
