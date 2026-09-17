@@ -12,6 +12,7 @@ Env:
   SUMMARY_POLL_MINUTES how long to wait for a submitted batch before leaving it (default 40)
   SUMMARY_LIMIT        cap this run's batch (for a small test run)
   SUMMARY_REGENERATE   set to 1 to rewrite summaries that already exist
+  TEXT_FETCH_INTERVAL  seconds between bill-text downloads (default 2.0)
 """
 import argparse
 import html
@@ -33,6 +34,10 @@ BATCH_SIZE = int(os.environ.get("SUMMARY_BATCH_SIZE", "2500"))
 MAX_SPEND = float(os.environ.get("SUMMARY_MAX_SPEND", "60"))
 POLL_MINUTES = float(os.environ.get("SUMMARY_POLL_MINUTES", "40"))
 TEXT_CHAR_LIMIT = 12000
+# www.congress.gov serves the bill text and rate-limits separately from the API.
+TEXT_MIN_INTERVAL = float(os.environ.get("TEXT_FETCH_INTERVAL", "2.0"))
+TEXT_MAX_ATTEMPTS = 4
+TEXT_GIVE_UP_AFTER = 8   # consecutive blocked fetches before we stop collecting this run
 MAX_TOKENS = 200
 RETRY_NO_TEXT_DAYS = 14
 
@@ -55,6 +60,7 @@ SYSTEM = (
 )
 
 TAG_RE = re.compile(r"<[^>]+>")
+_last_text_fetch = 0.0
 
 
 def _read_json(path, default=None):
@@ -108,6 +114,10 @@ def needs_summary(bill, regenerate=False):
         return True
     if existing.get("text"):
         return False
+    # Markers written before the rate-limit fix can't be trusted: some said "no text"
+    # when the fetch had merely been blocked. Retry those once, whatever their age.
+    if not existing.get("noTextConfirmed"):
+        return True
     # Text wasn't published last time we looked; retry occasionally.
     checked = existing.get("checkedAt", "")
     try:
@@ -133,31 +143,64 @@ def candidates(data_dir, regenerate=False):
     return found
 
 
+def _get_text_file(url):
+    """Fetch a bill text file, throttled, honouring 429s. Returns (text, status)."""
+    global _last_text_fetch
+    for attempt in range(TEXT_MAX_ATTEMPTS):
+        wait = TEXT_MIN_INTERVAL - (time.time() - _last_text_fetch)
+        if wait > 0:
+            time.sleep(wait)
+        _last_text_fetch = time.time()
+        try:
+            resp = requests.get(url, timeout=90, headers={
+                "User-Agent": "congress-leaderboard/1.0 (nightly summary job; contact via GitHub)"
+            })
+        except requests.RequestException as exc:
+            print(f"  network error fetching text ({exc}); retrying")
+            time.sleep(15 * (attempt + 1))
+            continue
+        if resp.status_code == 429 or resp.status_code >= 500:
+            retry_after = resp.headers.get("Retry-After")
+            delay = int(retry_after) if (retry_after or "").isdigit() else 30 * (2 ** attempt)
+            print(f"  congress.gov returned {resp.status_code}; waiting {delay}s")
+            time.sleep(min(delay, 300))
+            continue
+        if resp.status_code == 404:
+            return None, "no_text"
+        if resp.status_code >= 400:
+            return None, "error"
+        return resp.text, "ok"
+    return None, "error"
+
+
 def fetch_text(api, bill):
-    """Return (text, version_date) for the most recent text version, or (None, None)."""
+    """Return (text, version_date, status) where status is ok, no_text, or error.
+
+    'no_text' means Congress.gov has not published the text yet, which is a durable
+    answer worth recording. 'error' means we could not reach it right now, which is not:
+    recording that would skip a bill that does have text.
+    """
     data = api.get(f"/bill/{config.CONGRESS}/{bill['type']}/{bill['number']}/text")
     versions = (data or {}).get("textVersions") or []
     if not versions:
-        return None, None
+        return None, None, "no_text"
     latest = max(versions, key=lambda v: v.get("date") or "")
     formats = {f.get("type"): f.get("url") for f in latest.get("formats") or []}
     url = formats.get("Formatted Text") or formats.get("Text") or next(
         (u for t, u in formats.items() if t and "PDF" not in t and u), None)
     if not url:
-        return None, None
-    try:
-        resp = requests.get(url, timeout=90)
-        resp.raise_for_status()
-    except requests.RequestException as exc:
-        print(f"  text fetch failed for {bill['id']}: {exc}")
-        return None, None
-    body = resp.text
+        return None, None, "no_text"
+    body, status = _get_text_file(url)
+    if status != "ok" or not body:
+        return None, latest.get("date"), status
     if "<" in body[:2000]:
         body = TAG_RE.sub(" ", body)
     body = html.unescape(body)
     body = "\n".join(line.strip() for line in body.splitlines())
     body = re.sub(r"\n{3,}", "\n\n", re.sub(r"[ \t]{2,}", " ", body)).strip()
-    return (body[:TEXT_CHAR_LIMIT] or None), latest.get("date")
+    if not body:
+        return None, latest.get("date"), "no_text"
+    return body[:TEXT_CHAR_LIMIT], latest.get("date"), "ok"
 
 
 def build_request(bill, text):
@@ -195,25 +238,36 @@ def submit(state, data_dir, limit, regenerate=False):
     print(f"Preparing up to {target} bills (worst-case ${target * per_bill:.2f}, ${budget_left:.2f} of budget left)")
 
     api = CongressAPI(config.API_KEY, time.time() + POLL_MINUTES * 60 + 3600)
-    requests_payload, pending, no_text = [], {}, 0
+    requests_payload, pending, no_text, blocked = [], {}, 0, 0
     for bill in pool:
         if len(requests_payload) >= target:
             break
         try:
-            text, version_date = fetch_text(api, bill)
+            text, version_date, status = fetch_text(api, bill)
         except BudgetExhausted:
             print("  out of time while collecting bill text; submitting what we have")
             break
+        if status == "error":
+            # Don't record anything: the text may well exist, we just couldn't reach it.
+            blocked += 1
+            if blocked >= TEXT_GIVE_UP_AFTER:
+                print(f"  congress.gov is refusing repeated requests ({blocked} in a row); "
+                      "submitting what we have and leaving the rest for the next run")
+                break
+            continue
+        blocked = 0
         if not text:
             _write_json(summary_path(bill["type"], bill["number"]),
-                        {"text": None, "reason": "no bill text published yet", "checkedAt": _now()})
+                        {"text": None, "reason": "no bill text published yet",
+                         "noTextConfirmed": True, "checkedAt": _now()})
             no_text += 1
             continue
         requests_payload.append(build_request(bill, text))
         pending[f"{bill['type']}-{bill['number']}"] = {
             "type": bill["type"], "number": bill["number"], "textVersionDate": version_date,
         }
-    print(f"  {len(requests_payload)} ready, {no_text} had no published text, {api.calls} Congress.gov calls")
+    print(f"  {len(requests_payload)} ready, {no_text} had no published text, "
+          f"{blocked} unreachable this run, {api.calls} Congress.gov API calls")
     if not requests_payload:
         return state
 

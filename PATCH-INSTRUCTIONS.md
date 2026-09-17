@@ -1,27 +1,34 @@
-# Patch: summary ordering, prompt, and a regenerate switch
+# Patch: handle congress.gov rate limiting
 
-## Files (both replace what's in the repo)
+One file: `pipeline/summarize.py` (replaces what's in the repo). No workflow change.
 
-- `pipeline/summarize.py`
-- `.github/workflows/update-data.yml`
+## The bug
 
-## What changed
+Bill text is served by www.congress.gov, which rate-limits separately from the API. When it
+started returning 429 ("Too Many Requests"), the script did two wrong things:
 
-1. **Oldest bills first.** The queue now runs oldest-to-newest within each bill type. The
-   first run looked at the newest bills, where Congress.gov often hasn't published text
-   yet, which is why 109 of 209 came back with nothing to summarize.
-2. **Prompt leads with the verb.** "Authorizes grants to..." instead of "The bill
-   authorizes...". Telling the model what to do works better than telling it what to
-   avoid. Word cap tightened from 45 to 40.
-3. **New regenerate switch.** No need to delete any files. The Run workflow dropdown now
-   has a **"Rewrite summaries that already exist"** checkbox. It never overwrites a
-   Congressional Research Service summary.
+1. It recorded each blocked bill as "no bill text published yet" — a durable marker meaning
+   "don't look at this again for two weeks" — even though the text exists.
+2. It kept requesting at full speed from a host already refusing, which tends to prolong
+   the block.
 
-## To rewrite the 98 existing summaries
+## The fix
 
-Actions -> Update Congress data -> Run workflow, tick **Rewrite summaries that already
-exist**, and put `120` in the summary limit field so it stops after the existing ones plus
-a few. Cost is around ten cents.
+- Failing to reach the host and the host saying there is no text are now treated as
+  different outcomes. A blocked fetch records nothing, so those bills are simply retried.
+- Text downloads are throttled (default one every 2 seconds, set `TEXT_FETCH_INTERVAL` to
+  change) and back off on a 429, honouring any Retry-After header.
+- After 8 consecutive blocked fetches, the run stops collecting, submits whatever it
+  gathered, and leaves the rest for the next run.
+- Markers written before this fix are re-checked rather than trusted, since some of them
+  are false. That repairs the bad data from the interrupted run automatically.
 
-Then leave both fields alone for the full backfill. Real cost is running about $0.00094 per
-summary, so all 11,410 should come to roughly $11.
+## What to do
+
+1. Upload the file.
+2. Give congress.gov an hour or two before the next run, so any block expires.
+3. Run the workflow normally, both fields alone. Watch the summarize step: "N ready,
+   N had no published text, N unreachable this run". A handful unreachable is fine; if it
+   stops early again, raise `TEXT_FETCH_INTERVAL` to 4 or 5 in the workflow's env block.
+
+Nothing needs deleting. The false markers are re-checked on the next run.
