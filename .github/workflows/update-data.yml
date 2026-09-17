@@ -9,6 +9,10 @@ on:
         description: "Max bills to summarize this run (blank = normal batch size)"
         required: false
         default: ""
+      regenerate_summaries:
+        description: "Rewrite summaries that already exist (after a prompt change)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -42,6 +46,7 @@ jobs:
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUMMARY_LIMIT: ${{ github.event.inputs.summary_limit }}
+          SUMMARY_REGENERATE: ${{ github.event.inputs.regenerate_summaries }}
           PYTHONUNBUFFERED: "1"
         run: python -m pipeline.summarize
 

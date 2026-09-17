@@ -11,6 +11,7 @@ Env:
   SUMMARY_MAX_SPEND    cumulative USD ceiling across all runs (default 60)
   SUMMARY_POLL_MINUTES how long to wait for a submitted batch before leaving it (default 40)
   SUMMARY_LIMIT        cap this run's batch (for a small test run)
+  SUMMARY_REGENERATE   set to 1 to rewrite summaries that already exist
 """
 import argparse
 import html
@@ -44,12 +45,15 @@ STATE_FILE = config.DATA_DIR / "state" / "summary_state.json"
 
 SYSTEM = (
     "You summarize United States federal legislation for a public, nonpartisan reference site. "
-    "Given a bill's title and text, write one or two sentences, 45 words maximum, in plain English, "
-    "describing what the bill would do if enacted. Requirements: state only what is in the text; "
-    "do not speculate about motives, effects, politics, or likelihood of passage; use no praise or "
-    "criticism; do not begin with 'This bill' or 'The bill'; do not mention the sponsor. "
-    "If the text is too fragmentary to summarize, reply with exactly: INSUFFICIENT TEXT"
+    "Given a bill's title and text, write one or two sentences, 40 words maximum, in plain English, "
+    "describing what the measure would do if enacted. "
+    "Open with the verb for its main action, in the third person: for example 'Authorizes grants to...', "
+    "'Amends the Internal Revenue Code to...', 'Requires the Secretary to...', 'Establishes a program that...'. "
+    "Requirements: state only what is in the text; do not speculate about motives, effects, politics, or "
+    "likelihood of passage; use no praise or criticism; do not mention the sponsor; do not restate the bill "
+    "number or title. If the text is too fragmentary to summarize, reply with exactly: INSUFFICIENT TEXT"
 )
+
 TAG_RE = re.compile(r"<[^>]+>")
 
 
@@ -93,10 +97,12 @@ def summary_path(bill_type, number):
     return SUMMARY_DIR / bill_type / f"{number}.json"
 
 
-def needs_summary(bill):
+def needs_summary(bill, regenerate=False):
     """True if this bill has no CRS summary and no usable stored AI summary."""
     if bill.get("summaries"):
         return False
+    if regenerate:
+        return True
     existing = _read_json(summary_path(bill["type"], bill["number"]))
     if not existing:
         return True
@@ -111,15 +117,19 @@ def needs_summary(bill):
     return datetime.now(timezone.utc) - when > timedelta(days=RETRY_NO_TEXT_DAYS)
 
 
-def candidates(data_dir):
-    """Bills needing a summary, ranked bill types first, newest first within a type."""
+def candidates(data_dir, regenerate=False):
+    """Bills needing a summary: ranked types first, then oldest first.
+
+    Oldest-first matters. Congress.gov publishes a bill's text days or weeks after
+    introduction, so working newest-first spends API calls on bills that have no text yet.
+    """
     order = {t: i for i, t in enumerate(config.ALL_TYPES)}
     found = []
     for path in (data_dir / "raw" / "bills").glob("*/*.json"):
         bill = _read_json(path)
-        if bill and needs_summary(bill):
+        if bill and needs_summary(bill, regenerate):
             found.append(bill)
-    found.sort(key=lambda b: (order.get(b["type"], 99), -int(b["number"])))
+    found.sort(key=lambda b: (order.get(b["type"], 99), b.get("introducedDate") or "", int(b["number"])))
     return found
 
 
@@ -168,9 +178,10 @@ def build_request(bill, text):
     }
 
 
-def submit(state, data_dir, limit):
-    pool = candidates(data_dir)
-    print(f"{len(pool)} bills have no CRS summary and no AI summary yet")
+def submit(state, data_dir, limit, regenerate=False):
+    pool = candidates(data_dir, regenerate)
+    print(f"{len(pool)} bills to summarize"
+          + (" (regenerating existing summaries)" if regenerate else " (no CRS summary, none generated yet)"))
     if not pool:
         return state
     budget_left = MAX_SPEND - state["spendUsd"]
@@ -288,6 +299,9 @@ def main(argv=None):
     parser.add_argument("--limit", type=int, default=int(os.environ.get("SUMMARY_LIMIT", "0") or 0),
                         help="cap the number of bills submitted this run (for a test run)")
     parser.add_argument("--collect-only", action="store_true", help="collect an in-flight batch and stop")
+    parser.add_argument("--regenerate", action="store_true",
+                        default=os.environ.get("SUMMARY_REGENERATE", "").lower() in ("1", "true", "yes"),
+                        help="rewrite summaries that already exist (use after changing the prompt)")
     args = parser.parse_args(argv)
 
     state = _load_state()
@@ -297,7 +311,7 @@ def main(argv=None):
             if not finished or args.collect_only:
                 return
         if not args.collect_only:
-            state = submit(state, config.DATA_DIR, args.limit)
+            state = submit(state, config.DATA_DIR, args.limit, args.regenerate)
             if state.get("batchId"):
                 collect(state)
     finally:
