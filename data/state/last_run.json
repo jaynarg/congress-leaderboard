@@ -1,0 +1,11 @@
+{
+ "apiCalls": 23256,
+ "billsFailed": 0,
+ "billsFetched": 7297,
+ "billsInIndex": 18773,
+ "billsRemaining": 11176,
+ "congress": 119,
+ "finishedAt": "2026-09-17T00:14:55+00:00",
+ "startedAt": "2026-09-16T18:54:55+00:00",
+ "upToDate": false
+}
