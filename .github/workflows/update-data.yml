@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 10 * * *"   # 10:00 UTC daily = 3 a.m. Pacific (daylight time)
   workflow_dispatch:        # adds a "Run workflow" button in the Actions tab
+    inputs:
+      summary_limit:
+        description: "Max bills to summarize this run (blank = normal batch size)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -32,7 +37,16 @@ jobs:
           PYTHONUNBUFFERED: "1"
         run: python -m pipeline.run
 
+      - name: Summarize bills without a CRS summary
+        env:
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUMMARY_LIMIT: ${{ github.event.inputs.summary_limit }}
+          PYTHONUNBUFFERED: "1"
+        run: python -m pipeline.summarize
+
       - name: Build stats
+        if: always()   # still rebuild the site if summarizing failed
         env:
           PYTHONUNBUFFERED: "1"
         run: python -m pipeline.stats

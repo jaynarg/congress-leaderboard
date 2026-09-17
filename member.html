@@ -40,6 +40,7 @@
   .bill-meta{font-size:.82rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:.75rem}
   .summary{margin:.35rem 0 0; font-size:.9rem; color:#3A4046; max-width:74ch}
   .pending{color:var(--muted); font-style:italic}
+  .ai-tag{display:inline-block; margin-left:.35rem; padding:0 .35rem; border:1px solid var(--rule); border-radius:3px; font-size:.72rem; color:var(--muted); white-space:nowrap; vertical-align:1px}
   .more{margin:1.25rem 0 0}
   .more button{border:1px solid var(--rule); background:var(--panel); border-radius:4px; padding:.5rem .9rem; cursor:pointer}
   .note{font-size:.85rem; color:var(--muted)}
@@ -106,7 +107,9 @@ function billItem(b){
       <span>${b.cosponsors} cosponsors${b.crossPartyCosponsors ? ` (${b.crossPartyCosponsors} across the aisle)` : ""}</span>
       ${b.policyArea ? `<span>${esc(b.policyArea)}</span>` : ""}
     </div>
-    ${b.summary ? `<p class="summary">${esc(b.summary)}</p>` : '<p class="summary pending">Summary pending.</p>'}
+    ${b.summary
+      ? `<p class="summary">${esc(b.summary)}${b.summarySource === "ai" ? '<span class="ai-tag" title="Written by Claude from the bill text; no Congressional Research Service summary exists yet">AI summary</span>' : ""}</p>`
+      : '<p class="summary pending">Summary pending.</p>'}
   </li>`;
 }
 

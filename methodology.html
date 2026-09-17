@@ -18,6 +18,7 @@
   dt{font-weight:700; margin-top:1rem}
   dd{margin:.2rem 0 0}
   .limits li{margin-bottom:.6rem}
+  .ai-tag-inline{border:1px solid var(--rule); border-radius:3px; padding:0 .3rem; font-size:.78rem; color:var(--muted)}
 </style>
 </head>
 <body>
@@ -37,6 +38,9 @@
   <h2>What counts as bipartisan</h2>
   <p>A sponsored bill is bipartisan here if at least one member of the other caucus signed on as an <em>original</em> cosponsor, meaning they were there at introduction rather than added later. Recruiting a single member of the other party after the fact is common practice, so the stricter test is the more meaningful one. Member pages also show how many cosponsors across all of a member's bills came from the other party, and what share of a member's own cosponsorships went to the other party's bills.</p>
   <p>Cosponsorships that were later withdrawn are excluded everywhere. Independents count with the party they caucus with, and party is evaluated as of the date a bill was introduced or a cosponsorship was signed, so a member who switched parties mid-Congress is counted correctly on both sides of the switch.</p>
+
+  <h2>Where the summaries come from</h2>
+  <p>Each bill shows the Congressional Research Service summary when one exists. Most bills do not have one for weeks or months after introduction, and many never get one. In those cases the site shows a summary written by Claude, Anthropic's language model, from the text of the bill itself, marked <span class="ai-tag-inline">AI summary</span>. These are generated from the bill text alone, with instructions to describe only what the measure would do and to avoid any characterization of its merits. They are replaced automatically once a Research Service summary is published. Bills whose text has not yet been posted show no summary at all.</p>
 
   <h2>How far a bill got</h2>
   <dl>
