@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Member &middot; 119th Congress legislative activity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .back{display:inline-block; margin:1.5rem 0 .75rem; font-size:.88rem; color:var(--muted)}
+  .profile{display:flex; gap:1.25rem; align-items:flex-start; padding-bottom:1.25rem; border-bottom:1.5px solid var(--ink)}
+  .profile img{width:96px; height:116px; object-fit:cover; border-radius:4px; background:#EDEAE3; flex:none}
+  .profile h1{margin:0 0 .2rem; font-size:clamp(1.5rem,3vw,2.15rem); letter-spacing:-.02em; line-height:1.1}
+  .profile .seat{color:var(--muted); margin:0 0 .5rem}
+  .headline{margin:.4rem 0 0; max-width:60ch}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(9rem,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); border-top:0; margin-bottom:2.25rem}
+  .stat{background:var(--panel); padding:.85rem 1rem}
+  .stat b{display:block; font-size:1.65rem; font-weight:800; letter-spacing:-.02em; line-height:1.1}
+  .stat span{font-size:.82rem; color:var(--muted)}
+  .stat.accent b{color:var(--bipartisan)}
+  section h2{font-size:1.05rem; margin:0 0 .65rem}
+  .partners{list-style:none; padding:0; margin:0 0 2.5rem; display:flex; flex-wrap:wrap; gap:.5rem}
+  .partners a{display:inline-flex; align-items:center; gap:.45rem; border:1px solid var(--rule); background:var(--panel); border-radius:999px; padding:.3rem .7rem; text-decoration:none; font-size:.9rem}
+  .partners a:hover{border-color:var(--ink)}
+  .partners b{font-weight:700}
+  .partners span{color:var(--muted); font-size:.82rem}
+  .billbar{display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-bottom:.9rem}
+  .seg{display:flex; border:1px solid var(--rule); border-radius:4px; overflow:hidden; background:var(--panel)}
+  .seg button{border:0; background:transparent; padding:.45rem .8rem; cursor:pointer; color:var(--muted)}
+  .seg button[aria-pressed=true]{background:var(--ink); color:var(--paper)}
+  .toggle{display:inline-flex; align-items:center; gap:.4rem; font-size:.9rem; color:var(--muted)}
+  .bills{list-style:none; padding:0; margin:0}
+  .bills li{padding:.9rem 0; border-bottom:1px solid var(--rule)}
+  .bill-head{display:flex; flex-wrap:wrap; gap:.5rem; align-items:baseline}
+  .num{font-weight:800; letter-spacing:-.01em}
+  .bill-title{display:block; margin:.15rem 0 .35rem; max-width:78ch; text-decoration:none}
+  .bill-title:hover{text-decoration:underline}
+  .bill-meta{font-size:.82rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:.75rem}
+  .summary{margin:.35rem 0 0; font-size:.9rem; color:#3A4046; max-width:74ch}
+  .pending{color:var(--muted); font-style:italic}
+  .more{margin:1.25rem 0 0}
+  .more button{border:1px solid var(--rule); background:var(--panel); border-radius:4px; padding:.5rem .9rem; cursor:pointer}
+  .note{font-size:.85rem; color:var(--muted)}
+  @media (max-width:600px){ .profile img{width:64px; height:78px} }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="shell">
+    <a class="wordmark" href="index.html">119th Congress &middot; legislative activity</a>
+    <nav><a href="methodology.html">How this is measured</a></nav>
+  </div>
+</header>
+
+<main class="shell" id="main">
+  <a class="back" href="index.html">&larr; All members</a>
+  <div id="content"></div>
+</main>
+
+<footer class="foot">
+  <div class="shell"><p>Source: the Congress.gov API from the Library of Congress, refreshed nightly. <a href="methodology.html">How this is measured</a>.</p></div>
+</footer>
+
+<script>
+const DATA = "data/site/";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const caucusClass = c => c === "D" ? "d" : c === "R" ? "r" : "i";
+const pct = v => v === null || v === undefined ? "\u2014" : v.toFixed(0) + "%";
+const fmtDate = s => s ? new Date(s + "T12:00:00Z").toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"}) : "";
+const PAGE = 40;
+let member = null, meta = null;
+const view = {list:"sponsored", bipartisanOnly:false, includeResolutions:false, shown:PAGE};
+
+function seat(m){
+  const c = (m.caucus ?? m.party);
+  return m.chamber === "senate" ? `${c === "D" ? "Democrat" : c === "R" ? "Republican" : "Independent"}, ${m.state}` :
+    `${c === "D" ? "Democrat" : c === "R" ? "Republican" : "Independent"}, ${m.state}${m.district ? "-" + m.district : ""}`;
+}
+
+function headline(m){
+  const bits = [];
+  bits.push(`Sponsored ${m.sponsored} bills and joint resolutions`);
+  if (m.resolutionsSponsored) bits.push(`${m.resolutionsSponsored} other resolutions`);
+  let s = bits.join(", plus ") + ". ";
+  if (m.sponsored) {
+    s += `${m.bipartisanSponsored} of them (${pct(m.bipartisanPct)}) opened with a cosponsor from the other party`;
+    s += m.becameLaw ? `, and ${m.becameLaw} became law.` : ".";
+  }
+  return s;
+}
+
+function billItem(b){
+  const stageLabel = (meta.stageLabels || {})[b.stage] || b.stage;
+  return `<li>
+    <div class="bill-head">
+      <span class="num">${esc(b.number)}</span>
+      <span class="stage ${esc(b.stage)}">${esc(stageLabel)}</span>
+      ${b.bipartisan ? '<span class="bipartisan-tag">Bipartisan</span>' : ""}
+      ${b.ranked === false ? '<span class="note">resolution</span>' : ""}
+    </div>
+    <a class="bill-title" href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.title)}</a>
+    <div class="bill-meta">
+      <span>Introduced ${esc(fmtDate(b.introducedDate))}</span>
+      <span>${b.cosponsors} cosponsors${b.crossPartyCosponsors ? ` (${b.crossPartyCosponsors} across the aisle)` : ""}</span>
+      ${b.policyArea ? `<span>${esc(b.policyArea)}</span>` : ""}
+    </div>
+    ${b.summary ? `<p class="summary">${esc(b.summary)}</p>` : '<p class="summary pending">Summary pending.</p>'}
+  </li>`;
+}
+
+function cosponsoredItem(b){
+  const stageLabel = (meta.stageLabels || {})[b.stage] || b.stage;
+  return `<li>
+    <div class="bill-head">
+      <span class="num">${esc(b.number)}</span>
+      <span class="stage ${esc(b.stage)}">${esc(stageLabel)}</span>
+      ${b.crossParty ? '<span class="bipartisan-tag">Across the aisle</span>' : ""}
+    </div>
+    <a class="bill-title" href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.title)}</a>
+    <div class="bill-meta">
+      <span>Signed on ${esc(fmtDate(b.date))}</span>
+      <span>${b.original ? "Original cosponsor" : "Added later"}</span>
+    </div>
+  </li>`;
+}
+
+function currentList(){
+  if (view.list === "cosponsored") {
+    return member.cosponsoredBills.filter(b => !view.bipartisanOnly || b.crossParty);
+  }
+  return member.sponsoredBills.filter(b =>
+    (view.includeResolutions || b.ranked) && (!view.bipartisanOnly || b.bipartisan));
+}
+
+function renderBills(){
+  const all = currentList();
+  const shown = all.slice(0, view.shown);
+  document.getElementById("bill-list").innerHTML =
+    shown.map(view.list === "cosponsored" ? cosponsoredItem : billItem).join("") ||
+    `<li class="note">No bills match these filters.</li>`;
+  const more = document.getElementById("more");
+  more.innerHTML = all.length > shown.length
+    ? `<button type="button" id="more-btn">Show ${Math.min(PAGE, all.length - shown.length)} more of ${all.length}</button>`
+    : (view.list === "cosponsored" && member.cosponsored > member.cosponsoredBillsShown
+        ? `<p class="note">Showing the ${member.cosponsoredBillsShown} most recent of ${member.cosponsored} cosponsorships.</p>` : "");
+  const btn = document.getElementById("more-btn");
+  if (btn) btn.addEventListener("click", () => { view.shown += PAGE; renderBills(); });
+  document.getElementById("list-count").textContent = `${all.length} shown`;
+}
+
+function render(){
+  const m = member;
+  document.title = `${m.name} \u00b7 119th Congress legislative activity`;
+  document.getElementById("content").innerHTML = `
+    <div class="profile">
+      <img src="${esc(m.photoUrl)}" alt="" onerror="this.style.visibility='hidden'">
+      <div>
+        <h1>${esc(m.name)}</h1>
+        <p class="seat"><i class="dot ${caucusClass(m.caucus)}"></i> ${esc(seat(m))}${m.former ? " &middot; left office during this Congress" : ""}</p>
+        <p class="headline">${esc(headline(m))}</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>${m.sponsored}</b><span>Bills sponsored</span></div>
+      <div class="stat accent"><b>${pct(m.bipartisanPct)}</b><span>Opened with the other party</span></div>
+      <div class="stat"><b>${m.reported}</b><span>Out of committee</span></div>
+      <div class="stat"><b>${m.passedOneChamber}</b><span>Passed a chamber</span></div>
+      <div class="stat"><b>${m.becameLaw}</b><span>Became law</span></div>
+      <div class="stat"><b>${m.cosponsored}</b><span>Bills cosponsored</span></div>
+      <div class="stat"><b>${pct(m.reachingAcrossPct)}</b><span>Of those, other party's bills</span></div>
+    </div>
+    ${m.topCrossPartyCollaborators && m.topCrossPartyCollaborators.length ? `
+    <section>
+      <h2>Works across the aisle most often with</h2>
+      <ul class="partners">${m.topCrossPartyCollaborators.map(c => `
+        <li><a href="member.html?id=${encodeURIComponent(c.bioguideId)}"><i class="dot ${caucusClass(c.caucus)}"></i><b>${esc(c.name)}</b><span>${c.count} bills</span></a></li>`).join("")}
+      </ul>
+    </section>` : ""}
+    <section>
+      <h2>Legislation</h2>
+      <div class="billbar">
+        <div class="seg" role="group" aria-label="Which bills">
+          <button type="button" data-list="sponsored" aria-pressed="true">Sponsored</button>
+          <button type="button" data-list="cosponsored" aria-pressed="false">Cosponsored</button>
+        </div>
+        <label class="toggle"><input type="checkbox" id="f-bipartisan"> Bipartisan only</label>
+        <label class="toggle" id="res-wrap"><input type="checkbox" id="f-resolutions"> Include resolutions</label>
+        <span class="note" id="list-count"></span>
+      </div>
+      <ul class="bills" id="bill-list"></ul>
+      <div class="more" id="more"></div>
+    </section>`;
+
+  document.querySelectorAll("[data-list]").forEach(b => b.addEventListener("click", () => {
+    view.list = b.dataset.list; view.shown = PAGE;
+    document.querySelectorAll("[data-list]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+    document.getElementById("res-wrap").style.visibility = view.list === "sponsored" ? "visible" : "hidden";
+    renderBills();
+  }));
+  document.getElementById("f-bipartisan").addEventListener("change", e => { view.bipartisanOnly = e.target.checked; view.shown = PAGE; renderBills(); });
+  document.getElementById("f-resolutions").addEventListener("change", e => { view.includeResolutions = e.target.checked; view.shown = PAGE; renderBills(); });
+  renderBills();
+}
+
+(async function init(){
+  const id = new URLSearchParams(location.search).get("id");
+  if (!id || !/^[A-Za-z0-9]+$/.test(id)) {
+    document.getElementById("content").innerHTML = `<p class="note">No member selected. <a href="index.html">Browse all members</a>.</p>`;
+    return;
+  }
+  try {
+    meta = await (await fetch(DATA + "meta.json")).json();
+    const res = await fetch(DATA + "members/" + id + ".json");
+    if (!res.ok) throw new Error("not found");
+    member = await res.json();
+  } catch (err) {
+    document.getElementById("content").innerHTML = `<p class="note">That member page isn't available. <a href="index.html">Browse all members</a>.</p>`;
+    return;
+  }
+  render();
+})();
+</script>
+</body>
+</html>

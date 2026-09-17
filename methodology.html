@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How this is measured &middot; 119th Congress legislative activity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+  main{padding-bottom:1rem}
+  h1{font-size:clamp(1.6rem,3vw,2.3rem); letter-spacing:-.02em; margin:2rem 0 .5rem}
+  .lede{max-width:62ch; color:var(--muted); margin:0 0 2rem}
+  h2{font-size:1.05rem; margin:2rem 0 .5rem}
+  p,li{max-width:70ch}
+  dl{margin:0}
+  dt{font-weight:700; margin-top:1rem}
+  dd{margin:.2rem 0 0}
+  .limits li{margin-bottom:.6rem}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="shell">
+    <a class="wordmark" href="index.html">119th Congress &middot; legislative activity</a>
+    <nav><a href="index.html">All members</a></nav>
+  </div>
+</header>
+<main class="shell">
+  <h1>How this is measured</h1>
+  <p class="lede">Every number here comes from the Congress.gov API, published by the Library of Congress, and is recomputed nightly. Nothing is hand-entered or editorially weighted.</p>
+
+  <h2>What counts as a bill</h2>
+  <p>Rankings count bills and joint resolutions (HR, S, HJRES, SJRES), which are the measures that can become law. Simple and concurrent resolutions, which mostly express sentiment or handle internal chamber business, appear on member pages but are kept out of the rankings so that commemorative measures don't inflate a total.</p>
+
+  <h2>What counts as bipartisan</h2>
+  <p>A sponsored bill is bipartisan here if at least one member of the other caucus signed on as an <em>original</em> cosponsor, meaning they were there at introduction rather than added later. Recruiting a single member of the other party after the fact is common practice, so the stricter test is the more meaningful one. Member pages also show how many cosponsors across all of a member's bills came from the other party, and what share of a member's own cosponsorships went to the other party's bills.</p>
+  <p>Cosponsorships that were later withdrawn are excluded everywhere. Independents count with the party they caucus with, and party is evaluated as of the date a bill was introduced or a cosponsorship was signed, so a member who switched parties mid-Congress is counted correctly on both sides of the switch.</p>
+
+  <h2>How far a bill got</h2>
+  <dl>
+    <dt>Out of committee</dt><dd>Reported by committee or discharged from it.</dd>
+    <dt>Passed a chamber</dt><dd>Passed or agreed to in the House or the Senate.</dd>
+    <dt>Became law</dt><dd>Signed by the President, or enacted without signature. A few bills are signed before their public law number is assigned; those are counted as law.</dd>
+  </dl>
+  <p>Stage counts are cumulative: a bill that became law also counts as having passed and as having come out of committee.</p>
+
+  <h2>Known limits</h2>
+  <ul class="limits">
+    <li><strong>Bills folded into larger packages are undercounted.</strong> Much lawmaking happens when a member's text is absorbed into an appropriations bill, the defense authorization, or a reconciliation package. The standalone bill then dies on paper while the policy becomes law. Only the standalone path is measured here.</li>
+    <li><strong>Position shapes these numbers as much as skill does.</strong> Majority-party members and committee chairs advance more bills by virtue of the gavel. Leadership often sponsors very little. Senators and representatives are not comparable, which is why the two chambers are ranked separately.</li>
+    <li><strong>Sponsorship is not the whole job.</strong> Several members show zero sponsored bills and are still central to what passes, through committee work, negotiation, or floor management.</li>
+    <li><strong>A higher number is not automatically better.</strong> Volume can mean message bills as easily as it means workhorse legislating.</li>
+  </ul>
+
+  <h2>Sources</h2>
+  <p>Bill and cosponsorship data: the <a href="https://www.congress.gov/">Congress.gov</a> API. Member biography, party history, and photographs: the <a href="https://github.com/unitedstates/congress-legislators">unitedstates/congress-legislators</a> project. Bill numbers link back to the official record on Congress.gov.</p>
+  <p id="asof" class="note"></p>
+</main>
+<footer class="foot"><div class="shell"><p><a href="index.html">Back to all members</a></p></div></footer>
+<script>
+fetch("data/site/meta.json").then(r => r.json()).then(m => {
+  const d = new Date(m.dataThrough || m.generatedAt);
+  document.getElementById("asof").textContent =
+    `Currently covering ${m.billsCounted.toLocaleString()} measures from ${m.members} members, through ${d.toLocaleString()}.`;
+}).catch(() => {});
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+# The site only reads data/site/. Keep the raw bill files, pipeline code, and workflow
+# out of the deploy: ~19,000 files and 120 MB that the browser never requests.
+data/raw
+data/state
+pipeline
+.github
