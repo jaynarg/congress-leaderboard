@@ -48,13 +48,18 @@
   .who a{font-weight:700; text-decoration:none}
   .who a:hover{text-decoration:underline}
   .who small{display:block; color:var(--muted); font-weight:400; font-size:.8rem}
-  .bipar{display:flex; align-items:center; justify-content:flex-end; gap:.45rem}
-  .bar{width:52px; height:7px; background:#EAE7E0; border-radius:2px; overflow:hidden; flex:none}
+  /* Fixed tracks: the bar always starts at the same x, whatever the numbers are. */
+  .bipar{display:grid; grid-template-columns:46px 1fr; align-items:center; gap:.55rem}
+  .bar{width:46px; height:7px; background:#EAE7E0; border-radius:2px; overflow:hidden}
   .bar i{display:block; height:100%; background:var(--bipartisan)}
+  .bipar .nums{text-align:right; white-space:nowrap}
+  .bipar .pct{color:var(--muted)}
   .former-flag{font-size:.72rem; color:var(--muted); border:1px solid var(--rule); padding:0 .3rem; border-radius:2px}
   .empty{padding:2rem 0; color:var(--muted)}
   @media (max-width:760px){
     .hide-sm{display:none}
+    .bipar{grid-template-columns:1fr}
+    .bar{display:none}
     .who img{display:none}
     th,td{padding:.5rem .35rem}
   }
@@ -178,7 +183,7 @@ function render(){
         <small><i class="dot ${caucusClass(r.caucus)}"></i> ${esc(seat(r))}${r.former ? ' <span class="former-flag">left office</span>' : ""}</small></div>
       </div></td>
       <td>${r.sponsored}</td>
-      <td><span class="bipar"><span class="bar"><i style="width:${r.bipartisanPct ?? 0}%"></i></span>${r.bipartisanSponsored} <span style="color:var(--muted)">(${pct(r.bipartisanPct)})</span></span></td>
+      <td><span class="bipar"><span class="bar" aria-hidden="true"><i style="width:${r.bipartisanPct ?? 0}%"></i></span><span class="nums">${r.bipartisanSponsored} <span class="pct">${pct(r.bipartisanPct)}</span></span></span></td>
       <td class="hide-sm">${r.reported}</td>
       <td class="hide-sm">${r.passedOneChamber}</td>
       <td>${r.becameLaw}</td>
