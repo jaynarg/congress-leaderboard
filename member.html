@@ -20,6 +20,14 @@
   .stat b{display:block; font-size:1.65rem; font-weight:800; letter-spacing:-.02em; line-height:1.1}
   .stat span{font-size:.82rem; color:var(--muted)}
   .stat.accent b{color:var(--bipartisan)}
+  button.stat{font:inherit; text-align:left; border:0; cursor:pointer; position:relative}
+  button.stat:hover:not(:disabled){background:#F4F2EC}
+  button.stat[aria-pressed=true]{box-shadow:inset 0 0 0 2px var(--ink)}
+  button.stat[aria-pressed=true] span{color:var(--ink)}
+  button.stat:disabled{cursor:default; opacity:.55}
+  button.stat .hint{display:block; font-size:.72rem; color:var(--muted); margin-top:.15rem}
+  .clear-filter{border:1px solid var(--rule); background:var(--panel); border-radius:999px; padding:.15rem .6rem; cursor:pointer; font-size:.82rem; color:var(--muted)}
+  .clear-filter:hover{border-color:var(--ink); color:var(--ink)}
   section h2{font-size:1.05rem; margin:0 0 .65rem}
   .partners{list-style:none; padding:0; margin:0 0 2.5rem; display:flex; flex-wrap:wrap; gap:.5rem}
   .partners a{display:inline-flex; align-items:center; gap:.45rem; border:1px solid var(--rule); background:var(--panel); border-radius:999px; padding:.3rem .7rem; text-decoration:none; font-size:.9rem}
@@ -51,6 +59,7 @@
 <header class="masthead">
   <div class="shell">
     <a class="wordmark" href="index.html">119th Congress &middot; legislative activity</a>
+    <span class="byline">by Jay Nargundkar</span>
     <nav><a href="methodology.html">How this is measured</a></nav>
   </div>
 </header>
@@ -72,7 +81,9 @@ const pct = v => v === null || v === undefined ? "\u2014" : v.toFixed(0) + "%";
 const fmtDate = s => s ? new Date(s + "T12:00:00Z").toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"}) : "";
 const PAGE = 40;
 let member = null, meta = null;
-const view = {list:"sponsored", bipartisanOnly:false, includeResolutions:false, shown:PAGE};
+const view = {list:"sponsored", bipartisanOnly:false, includeResolutions:false, shown:PAGE, stage:null};
+// Stage counts are cumulative, so filtering by a stage means "reached at least this far".
+const STAGE_RANK = {introduced:0, reported:1, passed_one_chamber:2, passed_both_chambers:3, became_law:4};
 
 function seat(m){
   const c = (m.caucus ?? m.party);
@@ -130,11 +141,13 @@ function cosponsoredItem(b){
 }
 
 function currentList(){
+  const minRank = view.stage ? STAGE_RANK[view.stage] : -1;
+  const farEnough = b => (STAGE_RANK[b.stage] ?? 0) >= minRank;
   if (view.list === "cosponsored") {
-    return member.cosponsoredBills.filter(b => !view.bipartisanOnly || b.crossParty);
+    return member.cosponsoredBills.filter(b => (!view.bipartisanOnly || b.crossParty) && farEnough(b));
   }
   return member.sponsoredBills.filter(b =>
-    (view.includeResolutions || b.ranked) && (!view.bipartisanOnly || b.bipartisan));
+    (view.includeResolutions || b.ranked) && (!view.bipartisanOnly || b.bipartisan) && farEnough(b));
 }
 
 function renderBills(){
@@ -150,7 +163,21 @@ function renderBills(){
         ? `<p class="note">Showing the ${member.cosponsoredBillsShown} most recent of ${member.cosponsored} cosponsorships.</p>` : "");
   const btn = document.getElementById("more-btn");
   if (btn) btn.addEventListener("click", () => { view.shown += PAGE; renderBills(); });
-  document.getElementById("list-count").textContent = `${all.length} shown`;
+  const label = view.stage ? ((meta.stageLabels || {})[view.stage] || view.stage).toLowerCase() : null;
+  const countEl = document.getElementById("list-count");
+  countEl.innerHTML = view.stage
+    ? `${all.length} shown \u00b7 reached ${esc(label)} <button type="button" class="clear-filter" id="clear-stage">Clear</button>`
+    : `${all.length} shown`;
+  const clear = document.getElementById("clear-stage");
+  if (clear) clear.addEventListener("click", () => setStage(null));
+  document.querySelectorAll("button.stat[data-stage]").forEach(btn =>
+    btn.setAttribute("aria-pressed", String(btn.dataset.stage === view.stage)));
+}
+
+function setStage(stage){
+  view.stage = stage;
+  view.shown = PAGE;
+  renderBills();
 }
 
 function render(){
@@ -168,9 +195,9 @@ function render(){
     <div class="stats">
       <div class="stat"><b>${m.sponsored}</b><span>Bills sponsored</span></div>
       <div class="stat accent"><b>${pct(m.bipartisanPct)}</b><span>Opened with the other party</span></div>
-      <div class="stat"><b>${m.reported}</b><span>Out of committee</span></div>
-      <div class="stat"><b>${m.passedOneChamber}</b><span>Passed a chamber</span></div>
-      <div class="stat"><b>${m.becameLaw}</b><span>Became law</span></div>
+      <button type="button" class="stat" data-stage="reported" aria-pressed="false" ${m.reported ? "" : "disabled"}><b>${m.reported}</b><span>Out of committee</span></button>
+      <button type="button" class="stat" data-stage="passed_one_chamber" aria-pressed="false" ${m.passedOneChamber ? "" : "disabled"}><b>${m.passedOneChamber}</b><span>Passed a chamber</span></button>
+      <button type="button" class="stat" data-stage="became_law" aria-pressed="false" ${m.becameLaw ? "" : "disabled"}><b>${m.becameLaw}</b><span>Became law</span></button>
       <div class="stat"><b>${m.cosponsored}</b><span>Bills cosponsored</span></div>
       <div class="stat"><b>${pct(m.reachingAcrossPct)}</b><span>Of those, other party's bills</span></div>
     </div>
@@ -196,8 +223,11 @@ function render(){
       <div class="more" id="more"></div>
     </section>`;
 
+  document.querySelectorAll("button.stat[data-stage]").forEach(btn => btn.addEventListener("click", () => {
+    setStage(view.stage === btn.dataset.stage ? null : btn.dataset.stage);
+  }));
   document.querySelectorAll("[data-list]").forEach(b => b.addEventListener("click", () => {
-    view.list = b.dataset.list; view.shown = PAGE;
+    view.list = b.dataset.list; view.shown = PAGE; view.stage = null;
     document.querySelectorAll("[data-list]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
     document.getElementById("res-wrap").style.visibility = view.list === "sponsored" ? "visible" : "hidden";
     renderBills();

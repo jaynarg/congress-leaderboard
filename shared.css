@@ -14,11 +14,23 @@ a{color:inherit}
 :focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:2px}
 .shell{width:var(--shell); margin:0 auto}
 .masthead{border-bottom:1px solid var(--rule); background:var(--panel)}
-.masthead .shell{display:flex; align-items:baseline; gap:1.5rem; padding:.9rem 0}
+.masthead .shell{display:flex; flex-wrap:wrap; align-items:baseline; gap:.15rem 1.25rem; padding:.9rem 0}
 .wordmark{font-weight:800; letter-spacing:-.015em; text-decoration:none; font-size:1.05rem}
+.byline{font-size:.88rem; color:var(--muted); white-space:nowrap}
+.byline::before{content:"\00b7"; margin-right:.5rem}
 .masthead nav{margin-left:auto; display:flex; gap:1.25rem; font-size:.9rem}
 .masthead nav a{color:var(--muted); text-decoration:none}
 .masthead nav a:hover{color:var(--ink); text-decoration:underline}
+/* On narrow screens the title takes its own line and the byline leads the second one,
+   where a leading middle dot would look like a stray bullet. */
+@media (max-width:640px){
+  .masthead .shell{padding:.7rem 0}
+  .wordmark{flex:1 0 100%; font-size:1rem}
+  .byline{font-size:.82rem}
+  .byline::before{content:none}
+  .masthead nav{font-size:.82rem}
+}
+
 .asof{font-size:.82rem; color:var(--muted)}
 .d{color:var(--dem)} .r{color:var(--rep)} .i{color:var(--ind)}
 .dot{display:inline-block; width:.6rem; height:.6rem; border-radius:50%; vertical-align:baseline}

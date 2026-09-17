@@ -64,6 +64,7 @@
 <header class="masthead">
   <div class="shell">
     <a class="wordmark" href="index.html">119th Congress &middot; legislative activity</a>
+    <span class="byline">by Jay Nargundkar</span>
     <nav><a href="methodology.html">How this is measured</a></nav>
   </div>
 </header>
@@ -198,7 +199,7 @@ function render(){
 
 function drawPlot(){
   const rows = visible(boards[state.chamber]).filter(r => r.sponsored > 0 && r.bipartisanPct !== null);
-  const W = 1000, H = 360, m = {t:14, r:16, b:44, l:46};
+  const W = 1000, H = 360, m = {t:14, r:16, b:44, l:64};
   const maxX = Math.max(10, ...rows.map(r => r.sponsored));
   const x = v => m.l + (v / maxX) * (W - m.l - m.r);
   const y = v => H - m.b - (v / 100) * (H - m.t - m.b);
