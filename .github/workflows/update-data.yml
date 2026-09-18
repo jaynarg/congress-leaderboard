@@ -49,7 +49,7 @@ jobs:
           SUMMARY_REGENERATE: ${{ github.event.inputs.regenerate_summaries }}
           PYTHONUNBUFFERED: "1"
           SUMMARY_BATCH_SIZE: "2500"
-          TEXT_FETCH_INTERVAL: "2.0"
+          TEXT_FETCH_INTERVAL: "0.5"
         run: python -m pipeline.summarize
 
       - name: Build stats

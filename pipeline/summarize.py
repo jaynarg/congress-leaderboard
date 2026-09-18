@@ -12,7 +12,8 @@ Env:
   SUMMARY_POLL_MINUTES how long to wait for a submitted batch before leaving it (default 40)
   SUMMARY_LIMIT        cap this run's batch (for a small test run)
   SUMMARY_REGENERATE   set to 1 to rewrite summaries that already exist
-  TEXT_FETCH_INTERVAL  seconds between bill-text downloads (default 2.0)
+  TEXT_FETCH_INTERVAL  seconds between bill-text downloads (default 0.5; govinfo is a
+                       bulk-data host and tolerates a faster pace than congress.gov did)
 """
 import argparse
 import html
@@ -34,8 +35,11 @@ BATCH_SIZE = int(os.environ.get("SUMMARY_BATCH_SIZE", "2500"))
 MAX_SPEND = float(os.environ.get("SUMMARY_MAX_SPEND", "60"))
 POLL_MINUTES = float(os.environ.get("SUMMARY_POLL_MINUTES", "40"))
 TEXT_CHAR_LIMIT = 12000
-# www.congress.gov serves the bill text and rate-limits separately from the API.
-TEXT_MIN_INTERVAL = float(os.environ.get("TEXT_FETCH_INTERVAL", "2.0"))
+# Bill text comes from GPO's govinfo, the upstream publisher. The Library of Congress
+# directs developers there for bulk use and blocks crawling of congress.gov file paths.
+GOVINFO_HTML = "https://www.govinfo.gov/content/pkg/{pkg}/html/{pkg}.htm"
+PACKAGE_RE = re.compile(r"(BILLS-[0-9A-Za-z]+)\.(?:htm|html|xml|txt)$", re.I)
+TEXT_MIN_INTERVAL = float(os.environ.get("TEXT_FETCH_INTERVAL", "0.5"))
 TEXT_MAX_ATTEMPTS = 4
 TEXT_GIVE_UP_AFTER = 8   # consecutive blocked fetches before we stop collecting this run
 MAX_TOKENS = 200
@@ -143,6 +147,18 @@ def candidates(data_dir, regenerate=False):
     return found
 
 
+def govinfo_url(congress_gov_url):
+    """Translate a congress.gov text URL into its govinfo equivalent.
+
+    Congress.gov serves ...dow/119/bills/hr1491/BILLS-119hr1491rh.htm; the filename stem is
+    the GPO package id, so the same document is at govinfo under /content/pkg/<id>/html/.
+    """
+    match = PACKAGE_RE.search(congress_gov_url or "")
+    if not match:
+        return None
+    return GOVINFO_HTML.format(pkg=match.group(1))
+
+
 def _get_text_file(url):
     """Fetch a bill text file, throttled, honouring 429s. Returns (text, status)."""
     global _last_text_fetch
@@ -190,9 +206,17 @@ def fetch_text(api, bill):
         (u for t, u in formats.items() if t and "PDF" not in t and u), None)
     if not url:
         return None, None, "no_text"
-    body, status = _get_text_file(url)
+    source = govinfo_url(url)
+    body, status = _get_text_file(source) if source else (None, "no_source")
+    if status in ("no_text", "no_source", "error") and source:
+        # Fall back to the congress.gov copy only if govinfo doesn't have this package.
+        if status == "no_text":
+            print(f"  {bill['id']}: not on govinfo, trying congress.gov")
+            body, status = _get_text_file(url)
+    elif not source:
+        body, status = _get_text_file(url)
     if status != "ok" or not body:
-        return None, latest.get("date"), status
+        return None, latest.get("date"), "no_text" if status in ("no_text", "no_source") else status
     if "<" in body[:2000]:
         body = TAG_RE.sub(" ", body)
     body = html.unescape(body)
