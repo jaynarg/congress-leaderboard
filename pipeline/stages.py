@@ -53,3 +53,44 @@ def bill_stage(bill):
     else:
         stage = INTRODUCED
     return stage, passed_house, passed_senate
+
+
+# Codes that mark a first arrival at each milestone, used for the activity feed.
+PASSED_HOUSE_TEXT = "passed/agreed to in house"
+PASSED_SENATE_TEXT = "passed/agreed to in senate"
+
+
+def stage_events(bill):
+    """First date the bill reached each stage: {stage: 'YYYY-MM-DD'}.
+
+    Only firsts are recorded, so a bill that passes the House twice appears once.
+    """
+    first = {}
+
+    def note(key, date):
+        if date and (key not in first or date < first[key]):
+            first[key] = date
+
+    note(INTRODUCED, bill.get("introducedDate"))
+    for action in bill.get("actions") or []:
+        date = (action.get("actionDate") or "")[:10]
+        if not date:
+            continue
+        code = action.get("actionCode")
+        text = (action.get("text") or "").lower()
+        if code in BECAME_LAW_CODES or text.startswith("became public law") or text.startswith("signed by president"):
+            note(BECAME_LAW, date)
+        elif code in PASSED_HOUSE_CODES or text.startswith(PASSED_HOUSE_TEXT):
+            note("passed_house", date)
+        elif code in PASSED_SENATE_CODES or text.startswith(PASSED_SENATE_TEXT):
+            note("passed_senate", date)
+        elif code in REPORTED_CODES:
+            note(REPORTED, date)
+
+    house, senate = first.pop("passed_house", None), first.pop("passed_senate", None)
+    both = [d for d in (house, senate) if d]
+    if both:
+        first[PASSED_ONE] = min(both)
+    if house and senate:
+        first[PASSED_BOTH] = max(house, senate)
+    return first

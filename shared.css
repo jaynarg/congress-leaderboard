@@ -21,6 +21,7 @@ a{color:inherit}
 .masthead nav{margin-left:auto; display:flex; gap:1.25rem; font-size:.9rem}
 .masthead nav a{color:var(--muted); text-decoration:none}
 .masthead nav a:hover{color:var(--ink); text-decoration:underline}
+.masthead nav a[aria-current=page]{color:var(--ink); font-weight:700}
 /* On narrow screens the title takes its own line and the byline leads the second one,
    where a leading middle dot would look like a stray bullet. */
 @media (max-width:640px){

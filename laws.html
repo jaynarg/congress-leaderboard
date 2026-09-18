@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laws enacted &middot; 119th Congress</title>
+<meta name="description" content="Every bill that became law in the 119th Congress, with sponsors, cross-party support, and how long each took.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .hero{padding:2.25rem 0 1rem}
+  .hero h1{font-size:clamp(1.7rem,3.2vw,2.5rem); line-height:1.12; letter-spacing:-.022em; font-weight:800; margin:0 0 .5rem; max-width:20ch}
+  .hero p{margin:0 0 .5rem; max-width:64ch; color:var(--muted)}
+  .caveat{border-left:3px solid var(--rule); padding:.15rem 0 .15rem .8rem; font-size:.9rem; color:var(--muted); max-width:64ch}
+  .controls{display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:1.75rem 0 .5rem}
+  .controls input[type=search]{flex:1 1 14rem; min-width:10rem; padding:.5rem .65rem; border:1px solid var(--rule); border-radius:4px; background:var(--panel)}
+  .controls select{padding:.5rem .55rem; border:1px solid var(--rule); border-radius:4px; background:var(--panel); max-width:16rem}
+  .seg{display:flex; border:1px solid var(--rule); border-radius:4px; overflow:hidden; background:var(--panel)}
+  .seg button{border:0; background:transparent; padding:.5rem .8rem; cursor:pointer; color:var(--muted)}
+  .seg button[aria-pressed=true]{background:var(--ink); color:var(--paper)}
+  .count{font-size:.85rem; color:var(--muted); margin:.25rem 0 1.25rem}
+  .laws{list-style:none; padding:0; margin:0}
+  .laws li{display:grid; grid-template-columns:7.5rem 1fr; gap:0 1.25rem; padding:1.1rem 0; border-bottom:1px solid var(--rule)}
+  .plate{font-weight:800; letter-spacing:-.01em}
+  .plate small{display:block; font-weight:400; color:var(--muted); font-size:.8rem; margin-top:.1rem}
+  .law-title{display:block; font-size:1.05rem; font-weight:700; text-decoration:none; margin-bottom:.3rem; max-width:66ch}
+  .law-title:hover{text-decoration:underline}
+  .law-meta{display:flex; flex-wrap:wrap; gap:.4rem .9rem; font-size:.84rem; color:var(--muted); align-items:baseline}
+  .law-meta a{color:var(--muted)}
+  .tag{border:1px solid var(--rule); border-radius:3px; padding:0 .35rem; font-size:.76rem; background:var(--panel)}
+  .tag.cra{border-color:#C9C2B4}
+  .summary{margin:.5rem 0 0; font-size:.92rem; color:#3A4046; max-width:74ch}
+  .ai-tag{display:inline-block; margin-left:.35rem; padding:0 .35rem; border:1px solid var(--rule); border-radius:3px; font-size:.72rem; color:var(--muted); vertical-align:1px}
+  .empty{padding:2rem 0; color:var(--muted)}
+  @media (max-width:640px){
+    .laws li{grid-template-columns:1fr; gap:.35rem}
+    .plate small{display:inline; margin-left:.5rem}
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="shell">
+    <a class="wordmark" href="index.html">119th Congress &middot; legislative activity</a>
+    <span class="byline">by Jay Nargundkar</span>
+    <nav>
+      <a href="laws.html" aria-current="page">Laws</a>
+      <a href="recent.html">Recent activity</a>
+      <a href="index.html">Members</a>
+      <a href="methodology.html">Methodology</a>
+    </nav>
+  </div>
+</header>
+
+<main class="shell">
+  <section class="hero">
+    <h1 id="headline">Everything the 119th Congress has enacted.</h1>
+    <p id="standfirst"></p>
+    <p class="caveat">These are bills that became law under their own number. Policy written into
+      appropriations bills, the defense authorization, or a reconciliation package is enacted through
+      those vehicles instead, and doesn't appear here even though the policy took effect.</p>
+  </section>
+
+  <div class="controls">
+    <input id="q" type="search" placeholder="Search titles, sponsors, law numbers" autocomplete="off" aria-label="Search laws">
+    <select id="area" aria-label="Policy area"><option value="">All policy areas</option></select>
+    <div class="seg" role="group" aria-label="Kind of law">
+      <button type="button" data-kind="all" aria-pressed="true">All</button>
+      <button type="button" data-kind="substantive" aria-pressed="false">Legislation</button>
+      <button type="button" data-kind="cra" aria-pressed="false">Rule disapprovals</button>
+    </div>
+    <div class="seg" role="group" aria-label="Support">
+      <button type="button" data-support="all" aria-pressed="true">Any support</button>
+      <button type="button" data-support="bipartisan" aria-pressed="false">Bipartisan</button>
+    </div>
+    <select id="sort" aria-label="Sort order">
+      <option value="recent">Most recent</option>
+      <option value="oldest">Oldest first</option>
+      <option value="fast">Quickest to enact</option>
+      <option value="slow">Longest to enact</option>
+      <option value="cosponsors">Most cosponsors</option>
+    </select>
+  </div>
+  <p class="count" id="count" aria-live="polite"></p>
+
+  <ul class="laws" id="list"></ul>
+  <p class="empty" id="empty" hidden>No laws match those filters.</p>
+</main>
+
+<footer class="foot">
+  <div class="shell">
+    <p id="asof"></p>
+    <p>Source: the Congress.gov API from the Library of Congress, refreshed nightly.
+      <a href="methodology.html">How this is measured</a>.</p>
+  </div>
+</footer>
+
+<script>
+const DATA = "data/site/";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const caucusClass = c => c === "D" ? "d" : c === "R" ? "r" : "i";
+const fmtDate = s => s ? new Date(s + "T12:00:00Z").toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"}) : "";
+const state = {q:"", area:"", kind:"all", support:"all", sort:"recent"};
+let laws = [], meta = null;
+
+function visible(){
+  const q = state.q.trim().toLowerCase();
+  return laws.filter(l =>
+    (state.kind === "all" || (state.kind === "cra" ? l.cra : !l.cra)) &&
+    (state.support === "all" || l.bipartisan) &&
+    (!state.area || l.policyArea === state.area) &&
+    (!q || (l.title || "").toLowerCase().includes(q) || (l.sponsorName || "").toLowerCase().includes(q)
+        || (l.lawNumber || "").toLowerCase().includes(q) || l.number.toLowerCase().includes(q)));
+}
+
+function sortLaws(rows){
+  const byDate = (a, b) => (a.enactedDate || "").localeCompare(b.enactedDate || "");
+  const sorters = {
+    recent: (a, b) => byDate(b, a),
+    oldest: byDate,
+    fast: (a, b) => (a.daysToEnact ?? 1e9) - (b.daysToEnact ?? 1e9),
+    slow: (a, b) => (b.daysToEnact ?? -1) - (a.daysToEnact ?? -1),
+    cosponsors: (a, b) => b.cosponsors - a.cosponsors,
+  };
+  return rows.slice().sort(sorters[state.sort] || sorters.recent);
+}
+
+function item(l){
+  const days = l.daysToEnact === null || l.daysToEnact === undefined ? ""
+    : l.daysToEnact === 0 ? "enacted the day it was introduced"
+    : `${l.daysToEnact.toLocaleString()} days from introduction`;
+  return `<li>
+    <div class="plate">${l.lawNumber ? "PL " + esc(l.lawNumber) : "Signed"}<small>${esc(l.number)}</small></div>
+    <div>
+      <a class="law-title" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)}</a>
+      <div class="law-meta">
+        <span>${esc(fmtDate(l.enactedDate))}</span>
+        <span><i class="dot ${caucusClass(l.sponsorCaucus)}"></i>
+          <a href="member.html?id=${encodeURIComponent(l.sponsorId)}">${esc(l.sponsorName)}</a></span>
+        <span>${l.cosponsors} cosponsors${l.crossPartyCosponsors ? ` (${l.crossPartyCosponsors} across the aisle)` : ""}</span>
+        ${days ? `<span>${days}</span>` : ""}
+        ${l.policyArea ? `<span class="tag">${esc(l.policyArea)}</span>` : ""}
+        ${l.cra ? '<span class="tag cra">Rule disapproval</span>' : ""}
+        ${l.bipartisan ? '<span class="bipartisan-tag">Bipartisan</span>' : ""}
+      </div>
+      ${l.summary ? `<p class="summary">${esc(l.summary)}${l.summarySource === "ai" ? '<span class="ai-tag">AI summary</span>' : ""}</p>` : ""}
+    </div>
+  </li>`;
+}
+
+function render(){
+  const rows = sortLaws(visible());
+  document.getElementById("list").innerHTML = rows.map(item).join("");
+  document.getElementById("empty").hidden = rows.length > 0;
+  const bipartisan = rows.filter(l => l.bipartisan).length;
+  document.getElementById("count").textContent =
+    `${rows.length} law${rows.length === 1 ? "" : "s"} shown \u00b7 ${bipartisan} opened with cross-party support`;
+}
+
+(async function init(){
+  [meta, laws] = await Promise.all([
+    fetch(DATA + "meta.json").then(r => r.json()),
+    fetch(DATA + "laws.json").then(r => r.json()),
+  ]);
+  const cra = laws.filter(l => l.cra).length;
+  const bipartisan = laws.filter(l => l.bipartisan).length;
+  document.getElementById("headline").textContent =
+    `${laws.length} laws, and how each one got there.`;
+  document.getElementById("standfirst").textContent =
+    `${bipartisan} of the ${laws.length} began with a cosponsor from the other party. ${cra} are resolutions disapproving an agency rule rather than new legislation.`;
+  const areas = [...new Set(laws.map(l => l.policyArea).filter(Boolean))].sort();
+  document.getElementById("area").insertAdjacentHTML("beforeend",
+    areas.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join(""));
+  const d = new Date(meta.dataThrough || meta.generatedAt);
+  document.getElementById("asof").textContent = `Data through ${d.toLocaleDateString(undefined,{month:"long", day:"numeric", year:"numeric"})}.`;
+
+  document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; render(); });
+  document.getElementById("area").addEventListener("change", e => { state.area = e.target.value; render(); });
+  document.getElementById("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+  for (const key of ["kind", "support"]) {
+    document.querySelectorAll(`[data-${key}]`).forEach(b => b.addEventListener("click", () => {
+      state[key] = b.dataset[key];
+      document.querySelectorAll(`[data-${key}]`).forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+      render();
+    }));
+  }
+  render();
+})();
+</script>
+</body>
+</html>
