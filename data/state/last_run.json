@@ -1,11 +1,11 @@
 {
- "apiCalls": 126,
+ "apiCalls": 93,
  "billsFailed": 0,
- "billsFetched": 13,
+ "billsFetched": 4,
  "billsInIndex": 18962,
  "billsRemaining": 0,
  "congress": 119,
- "finishedAt": "2026-09-18T19:45:16+00:00",
- "startedAt": "2026-09-18T19:43:20+00:00",
+ "finishedAt": "2026-09-18T20:36:09+00:00",
+ "startedAt": "2026-09-18T20:34:06+00:00",
  "upToDate": true
 }
