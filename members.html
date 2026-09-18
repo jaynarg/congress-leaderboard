@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Members &middot; What Congress Does</title>
+<meta name="description" content="Bills sponsored, bills passed, and cross-party support for every member of the 119th Congress.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .hero{padding:2.5rem 0 1.25rem}
+  .hero h1{font-size:clamp(1.75rem,3.4vw,2.6rem); line-height:1.12; letter-spacing:-.022em; font-weight:800; margin:0 0 .6rem; max-width:22ch}
+  .hero p{margin:0; max-width:62ch; color:var(--muted)}
+  .plot-wrap{margin:1.5rem 0 0; background:var(--panel); border:1px solid var(--rule); border-radius:4px; padding:1rem 1rem .5rem}
+  .plot-head{display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; align-items:baseline; margin-bottom:.35rem}
+  .plot-head h2{font-size:.95rem; margin:0; font-weight:700}
+  .legend{display:flex; gap:.9rem; font-size:.82rem; color:var(--muted); margin-left:auto}
+  .legend span{display:inline-flex; align-items:center; gap:.3rem}
+  svg{display:block; width:100%; height:auto; touch-action:pan-y}
+  .mark{cursor:pointer}
+  .mark:hover circle,.mark:focus-visible circle{stroke:var(--ink); stroke-width:1.6}
+  .axis-line{stroke:var(--rule)}
+  .grid-line{stroke:#EFEDE7}
+  .axis-text{fill:var(--muted); font-size:11px}
+  .axis-title{fill:var(--ink); font-size:11.5px; font-weight:700}
+  #tip{position:absolute; pointer-events:none; opacity:0; background:var(--ink); color:var(--paper); padding:.45rem .6rem; border-radius:4px; font-size:.8rem; line-height:1.35; max-width:16rem; z-index:5}
+  #tip b{display:block; font-weight:700}
+  .controls{display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:2.25rem 0 .6rem}
+  .controls input[type=search]{flex:1 1 15rem; min-width:11rem; padding:.5rem .65rem; border:1px solid var(--rule); border-radius:4px; background:var(--panel)}
+  .seg{display:flex; border:1px solid var(--rule); border-radius:4px; overflow:hidden; background:var(--panel)}
+  .seg button{border:0; background:transparent; padding:.5rem .8rem; cursor:pointer; color:var(--muted)}
+  .seg button[aria-pressed=true]{background:var(--ink); color:var(--paper)}
+  .toggle{display:inline-flex; align-items:center; gap:.4rem; font-size:.9rem; color:var(--muted)}
+  .count{font-size:.85rem; color:var(--muted); margin:.25rem 0 1rem}
+  table{width:100%; border-collapse:collapse; font-size:.92rem}
+  caption{text-align:left; padding-bottom:.4rem; font-size:.85rem; color:var(--muted)}
+  th,td{padding:.55rem .5rem; border-bottom:1px solid var(--rule); text-align:right; vertical-align:baseline}
+  th:first-child,td:first-child{text-align:left; width:2.5rem; color:var(--muted)}
+  th:nth-child(2),td:nth-child(2){text-align:left}
+  thead th{position:sticky; top:0; background:var(--paper); border-bottom:1.5px solid var(--ink); font-size:.82rem; font-weight:700; z-index:2}
+  thead th button{background:none; border:0; padding:.15rem; cursor:pointer; font:inherit; font-weight:700}
+  thead th[aria-sort] button{text-decoration:underline}
+  tbody tr:hover{background:#F4F2EC}
+  .who{display:flex; align-items:center; gap:.6rem}
+  .who img{width:34px; height:41px; object-fit:cover; border-radius:3px; background:#EDEAE3; flex:none}
+  .who a{font-weight:700; text-decoration:none}
+  .who a:hover{text-decoration:underline}
+  .who small{display:block; color:var(--muted); font-weight:400; font-size:.8rem}
+  /* Fixed tracks: the bar always starts at the same x, whatever the numbers are. */
+  .bipar{display:grid; grid-template-columns:46px 1fr; align-items:center; gap:.55rem}
+  .bar{width:46px; height:7px; background:#EAE7E0; border-radius:2px; overflow:hidden}
+  .bar i{display:block; height:100%; background:var(--bipartisan)}
+  .bipar .nums{text-align:right; white-space:nowrap}
+  .bipar .pct{color:var(--muted)}
+  .former-flag{font-size:.72rem; color:var(--muted); border:1px solid var(--rule); padding:0 .3rem; border-radius:2px}
+  .empty{padding:2rem 0; color:var(--muted)}
+  @media (max-width:760px){
+    .hide-sm{display:none}
+    .bipar{grid-template-columns:1fr}
+    .bar{display:none}
+    .who img{display:none}
+    th,td{padding:.5rem .35rem}
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="shell">
+    <a class="wordmark" href="index.html">What Congress Does</a>
+    <span class="byline">by Jay Nargundkar</span>
+    <nav>
+      <a href="laws.html">Laws</a>
+      <a href="recent.html">Recent activity</a>
+      <a href="members.html" aria-current="page">Members</a>
+      <a href="methodology.html">Methodology</a>
+    </nav>
+  </div>
+</header>
+
+<main class="shell">
+  <section class="hero">
+    <h1>Writing a lot of bills and writing bills with the other party are not the same thing.</h1>
+    <p>Every bill and joint resolution introduced in the 119th Congress, counted by the member who sponsored it. Each mark below is one legislator; select one to see their bills.</p>
+  </section>
+
+  <section class="plot-wrap">
+    <div class="plot-head">
+      <h2>Bills sponsored against share written with the other party</h2>
+      <div class="legend">
+        <span><i class="dot d"></i>Democratic caucus</span>
+        <span><i class="dot r"></i>Republican caucus</span>
+      </div>
+    </div>
+    <div id="plot"></div>
+  </section>
+
+  <div id="tip" role="status" aria-live="polite"></div>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Chamber">
+      <button type="button" data-chamber="house" aria-pressed="true">House</button>
+      <button type="button" data-chamber="senate" aria-pressed="false">Senate</button>
+    </div>
+    <label class="sr-only" for="q"></label>
+    <input id="q" type="search" placeholder="Search by name or state" autocomplete="off">
+    <div class="seg" role="group" aria-label="Caucus">
+      <button type="button" data-caucus="all" aria-pressed="true">All</button>
+      <button type="button" data-caucus="D" aria-pressed="false">Democratic</button>
+      <button type="button" data-caucus="R" aria-pressed="false">Republican</button>
+    </div>
+    <label class="toggle"><input type="checkbox" id="only-bipartisan"> Has bipartisan bills</label>
+    <label class="toggle"><input type="checkbox" id="show-former"> Include members who left</label>
+  </div>
+  <p class="count" id="count" aria-live="polite"></p>
+
+  <table id="board">
+    <caption id="caption"></caption>
+    <thead>
+      <tr>
+        <th scope="col"><span aria-hidden="true">#</span></th>
+        <th scope="col"><button type="button" data-sort="name">Member</button></th>
+        <th scope="col"><button type="button" data-sort="sponsored">Bills sponsored</button></th>
+        <th scope="col"><button type="button" data-sort="bipartisanPct">Bipartisan</button></th>
+        <th scope="col" class="hide-sm"><button type="button" data-sort="reported">Out of committee</button></th>
+        <th scope="col" class="hide-sm"><button type="button" data-sort="passedOneChamber">Passed a chamber</button></th>
+        <th scope="col"><button type="button" data-sort="becameLaw">Became law</button></th>
+        <th scope="col" class="hide-sm"><button type="button" data-sort="reachingAcrossPct">Cosponsors the other party</button></th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p class="empty" id="empty" hidden>No members match those filters. Clear the search or turn off a filter.</p>
+</main>
+
+<footer class="foot">
+  <div class="shell">
+    <p id="asof"></p>
+    <p>Source: the Congress.gov API from the Library of Congress, refreshed nightly. <a href="methodology.html">How this is measured</a>.</p>
+  </div>
+</footer>
+
+<script>
+const DATA = "data/site/";
+const state = {chamber:"house", caucus:"all", q:"", bipartisanOnly:false, former:false, sort:"sponsored", dir:-1};
+const boards = {};
+let meta = null;
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const caucusClass = c => c === "D" ? "d" : c === "R" ? "r" : "i";
+const seat = m => m.chamber === "senate" ? `${m.caucus ?? m.party}-${m.state}` : `${m.caucus ?? m.party}-${m.state}${m.district ? "-" + m.district : ""}`;
+const pct = v => v === null || v === undefined ? "\u2014" : v.toFixed(0) + "%";
+
+async function load(chamber){
+  if (!boards[chamber]) boards[chamber] = await (await fetch(DATA + "leaderboard-" + chamber + ".json")).json();
+  return boards[chamber];
+}
+
+function visible(rows){
+  const q = state.q.trim().toLowerCase();
+  return rows.filter(r =>
+    (state.former || !r.former) &&
+    (state.caucus === "all" || r.caucus === state.caucus) &&
+    (!state.bipartisanOnly || r.bipartisanSponsored > 0) &&
+    (!q || r.name.toLowerCase().includes(q) || r.state.toLowerCase() === q || (r.state + (r.district ?? "")).toLowerCase().includes(q))
+  );
+}
+
+function sorted(rows){
+  const k = state.sort;
+  return rows.slice().sort((a, b) => {
+    if (k === "name") return state.dir * a.name.localeCompare(b.name);
+    const av = a[k] ?? -1, bv = b[k] ?? -1;
+    return av === bv ? a.name.localeCompare(b.name) : state.dir * (av - bv);
+  });
+}
+
+function render(){
+  const rows = sorted(visible(boards[state.chamber]));
+  const body = document.getElementById("rows");
+  body.innerHTML = rows.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><div class="who">
+        <img src="${esc(r.photoUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <div><a href="member.html?id=${encodeURIComponent(r.bioguideId)}">${esc(r.name)}</a>
+        <small><i class="dot ${caucusClass(r.caucus)}"></i> ${esc(seat(r))}${r.former ? ' <span class="former-flag">left office</span>' : ""}</small></div>
+      </div></td>
+      <td>${r.sponsored}</td>
+      <td><span class="bipar"><span class="bar" aria-hidden="true"><i style="width:${r.bipartisanPct ?? 0}%"></i></span><span class="nums">${r.bipartisanSponsored} <span class="pct">${pct(r.bipartisanPct)}</span></span></span></td>
+      <td class="hide-sm">${r.reported}</td>
+      <td class="hide-sm">${r.passedOneChamber}</td>
+      <td>${r.becameLaw}</td>
+      <td class="hide-sm">${pct(r.reachingAcrossPct)}</td>
+    </tr>`).join("");
+  document.getElementById("empty").hidden = rows.length > 0;
+  const total = visible(boards[state.chamber]).length;
+  document.getElementById("count").textContent = `${total} ${state.chamber === "house" ? "representatives" : "senators"} shown`;
+  document.getElementById("caption").textContent = "Stage counts are cumulative: a bill that became law also counts as passed and out of committee.";
+  document.querySelectorAll("thead th").forEach(th => {
+    const btn = th.querySelector("button");
+    if (!btn) return;
+    if (btn.dataset.sort === state.sort) th.setAttribute("aria-sort", state.dir === -1 ? "descending" : "ascending");
+    else th.removeAttribute("aria-sort");
+  });
+  drawPlot();
+}
+
+function drawPlot(){
+  const rows = visible(boards[state.chamber]).filter(r => r.sponsored > 0 && r.bipartisanPct !== null);
+  const W = 1000, H = 360, m = {t:14, r:16, b:44, l:64};
+  const maxX = Math.max(10, ...rows.map(r => r.sponsored));
+  const x = v => m.l + (v / maxX) * (W - m.l - m.r);
+  const y = v => H - m.b - (v / 100) * (H - m.t - m.b);
+  const xTicks = [0, .25, .5, .75, 1].map(f => Math.round(maxX * f));
+  const marks = rows.map(r => {
+    const cx = x(r.sponsored).toFixed(1), cy = y(r.bipartisanPct).toFixed(1);
+    return `<a class="mark" href="member.html?id=${encodeURIComponent(r.bioguideId)}" tabindex="0"
+      data-name="${esc(r.name)}" data-seat="${esc(seat(r))}" data-s="${r.sponsored}" data-b="${r.bipartisanPct}" data-l="${r.becameLaw}">
+      <circle cx="${cx}" cy="${cy}" r="4.2" fill="var(--${r.caucus === "R" ? "rep" : r.caucus === "D" ? "dem" : "ind"})" fill-opacity=".62"></circle>
+      <title>${esc(r.name)}</title></a>`;
+  }).join("");
+  document.getElementById("plot").innerHTML = `
+  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Scatter plot: bills sponsored on the horizontal axis, share of bills with a cross-party original cosponsor on the vertical axis. Select a mark for that member.">
+    ${[0, 25, 50, 75, 100].map(t => `<line class="grid-line" x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}"></line>
+      <text class="axis-text" x="${m.l - 8}" y="${y(t) + 4}" text-anchor="end">${t}%</text>`).join("")}
+    ${xTicks.map(t => `<text class="axis-text" x="${x(t)}" y="${H - m.b + 18}" text-anchor="middle">${t}</text>`).join("")}
+    <line class="axis-line" x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}"></line>
+    <text class="axis-title" x="${(W) / 2}" y="${H - 6}" text-anchor="middle">Bills sponsored</text>
+    <text class="axis-title" transform="rotate(-90)" x="${-H / 2}" y="13" text-anchor="middle">Share with a cross-party original cosponsor</text>
+    ${marks}
+  </svg>`;
+}
+
+const tip = () => document.getElementById("tip");
+function showTip(el, ev){
+  const t = tip();
+  t.innerHTML = `<b>${el.dataset.name}</b>${el.dataset.seat} &middot; ${el.dataset.s} bills &middot; ${Math.round(el.dataset.b)}% bipartisan${Number(el.dataset.l) ? " &middot; " + el.dataset.l + " became law" : ""}`;
+  const r = el.getBoundingClientRect();
+  const px = (ev && ev.clientX !== undefined ? ev.clientX : r.left + r.width / 2) + window.scrollX;
+  const py = (ev && ev.clientY !== undefined ? ev.clientY : r.top) + window.scrollY;
+  t.style.opacity = 1;
+  t.style.left = Math.min(px + 12, window.scrollX + document.documentElement.clientWidth - t.offsetWidth - 12) + "px";
+  t.style.top = (py - t.offsetHeight - 10) + "px";
+}
+document.addEventListener("mouseover", e => { const a = e.target.closest(".mark"); if (a) showTip(a, e); });
+document.addEventListener("focusin", e => { const a = e.target.closest(".mark"); if (a) showTip(a); });
+document.addEventListener("mouseout", e => { if (e.target.closest(".mark")) tip().style.opacity = 0; });
+document.addEventListener("focusout", e => { if (e.target.closest(".mark")) tip().style.opacity = 0; });
+
+document.querySelectorAll("[data-chamber]").forEach(b => b.addEventListener("click", async () => {
+  state.chamber = b.dataset.chamber;
+  document.querySelectorAll("[data-chamber]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+  await load(state.chamber);
+  render();
+}));
+document.querySelectorAll("[data-caucus]").forEach(b => b.addEventListener("click", () => {
+  state.caucus = b.dataset.caucus;
+  document.querySelectorAll("[data-caucus]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+  render();
+}));
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; render(); });
+document.getElementById("only-bipartisan").addEventListener("change", e => { state.bipartisanOnly = e.target.checked; render(); });
+document.getElementById("show-former").addEventListener("change", e => { state.former = e.target.checked; render(); });
+document.querySelectorAll("thead button[data-sort]").forEach(b => b.addEventListener("click", () => {
+  const k = b.dataset.sort;
+  if (state.sort === k) state.dir = -state.dir;
+  else { state.sort = k; state.dir = k === "name" ? 1 : -1; }
+  render();
+}));
+
+(async function init(){
+  meta = await (await fetch(DATA + "meta.json")).json();
+  const d = new Date(meta.dataThrough || meta.generatedAt);
+  document.getElementById("asof").textContent =
+    `${meta.billsCounted.toLocaleString()} bills and resolutions from ${meta.members} members. Data through ${d.toLocaleDateString(undefined,{month:"long", day:"numeric", year:"numeric"})}.`;
+  await load("house");
+  render();
+})();
+</script>
+</body>
+</html>

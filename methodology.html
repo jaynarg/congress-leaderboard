@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How this is measured &middot; 119th Congress legislative activity</title>
+<title>How this is measured &middot; What Congress Does</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet">
@@ -24,12 +24,12 @@
 <body>
 <header class="masthead">
   <div class="shell">
-    <a class="wordmark" href="index.html">119th Congress &middot; legislative activity</a>
+    <a class="wordmark" href="index.html">What Congress Does</a>
     <span class="byline">by Jay Nargundkar</span>
     <nav>
       <a href="laws.html">Laws</a>
       <a href="recent.html">Recent activity</a>
-      <a href="index.html">Members</a>
+      <a href="members.html">Members</a>
       <a href="methodology.html" aria-current="page">Methodology</a>
     </nav>
   </div>
@@ -68,7 +68,7 @@
   <p>Bill and cosponsorship data: the <a href="https://www.congress.gov/">Congress.gov</a> API. Member biography, party history, and photographs: the <a href="https://github.com/unitedstates/congress-legislators">unitedstates/congress-legislators</a> project. Bill numbers link back to the official record on Congress.gov.</p>
   <p id="asof" class="note"></p>
 </main>
-<footer class="foot"><div class="shell"><p><a href="index.html">Back to all members</a></p></div></footer>
+<footer class="foot"><div class="shell"><p><a href="members.html">Back to all members</a></p></div></footer>
 <script>
 fetch("data/site/meta.json").then(r => r.json()).then(m => {
   const d = new Date(m.dataThrough || m.generatedAt);

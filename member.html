@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Member &middot; 119th Congress legislative activity</title>
+<title>Member &middot; What Congress Does</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet">
@@ -58,19 +58,19 @@
 <body>
 <header class="masthead">
   <div class="shell">
-    <a class="wordmark" href="index.html">119th Congress &middot; legislative activity</a>
+    <a class="wordmark" href="index.html">What Congress Does</a>
     <span class="byline">by Jay Nargundkar</span>
     <nav>
       <a href="laws.html">Laws</a>
       <a href="recent.html">Recent activity</a>
-      <a href="index.html" aria-current="page">Members</a>
+      <a href="members.html" aria-current="page">Members</a>
       <a href="methodology.html">Methodology</a>
     </nav>
   </div>
 </header>
 
 <main class="shell" id="main">
-  <a class="back" href="index.html">&larr; All members</a>
+  <a class="back" href="members.html">&larr; All members</a>
   <div id="content"></div>
 </main>
 
@@ -187,7 +187,7 @@ function setStage(stage){
 
 function render(){
   const m = member;
-  document.title = `${m.name} \u00b7 119th Congress legislative activity`;
+  document.title = `${m.name} \u00b7 What Congress Does`;
   document.getElementById("content").innerHTML = `
     <div class="profile">
       <img src="${esc(m.photoUrl)}" alt="" onerror="this.style.visibility='hidden'">
@@ -245,7 +245,7 @@ function render(){
 (async function init(){
   const id = new URLSearchParams(location.search).get("id");
   if (!id || !/^[A-Za-z0-9]+$/.test(id)) {
-    document.getElementById("content").innerHTML = `<p class="note">No member selected. <a href="index.html">Browse all members</a>.</p>`;
+    document.getElementById("content").innerHTML = `<p class="note">No member selected. <a href="members.html">Browse all members</a>.</p>`;
     return;
   }
   try {
@@ -254,7 +254,7 @@ function render(){
     if (!res.ok) throw new Error("not found");
     member = await res.json();
   } catch (err) {
-    document.getElementById("content").innerHTML = `<p class="note">That member page isn't available. <a href="index.html">Browse all members</a>.</p>`;
+    document.getElementById("content").innerHTML = `<p class="note">That member page isn't available. <a href="members.html">Browse all members</a>.</p>`;
     return;
   }
   render();
