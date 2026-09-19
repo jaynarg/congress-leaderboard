@@ -28,7 +28,8 @@
   #tip{position:absolute; pointer-events:none; opacity:0; background:var(--ink); color:var(--paper); padding:.45rem .6rem; border-radius:4px; font-size:.8rem; line-height:1.35; max-width:16rem; z-index:5}
   #tip b{display:block; font-weight:700}
   .controls{display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:2.25rem 0 .6rem}
-  .controls input[type=search]{flex:1 1 15rem; min-width:11rem; padding:.5rem .65rem; border:1px solid var(--rule); border-radius:4px; background:var(--panel)}
+  .controls input[type=search]{flex:1 1 13rem; min-width:10rem; padding:.5rem .65rem; border:1px solid var(--rule); border-radius:4px; background:var(--panel)}
+  .controls select{padding:.5rem .55rem; border:1px solid var(--rule); border-radius:4px; background:var(--panel)}
   .seg{display:flex; border:1px solid var(--rule); border-radius:4px; overflow:hidden; background:var(--panel)}
   .seg button{border:0; background:transparent; padding:.5rem .8rem; cursor:pointer; color:var(--muted)}
   .seg button[aria-pressed=true]{background:var(--ink); color:var(--paper)}
@@ -68,8 +69,10 @@
 <body>
 <header class="masthead">
   <div class="shell">
-    <a class="wordmark" href="index.html">What Congress Does</a>
-    <span class="byline">by Jay Nargundkar</span>
+    <div class="brand">
+      <a class="wordmark" href="index.html">What Congress Does</a>
+      <span class="byline">by Jay Nargundkar</span>
+    </div>
     <nav>
       <a href="laws.html">Laws</a>
       <a href="recent.html">Recent activity</a>
@@ -81,8 +84,9 @@
 
 <main class="shell">
   <section class="hero">
-    <h1>Writing a lot of bills and writing bills with the other party are not the same thing.</h1>
-    <p>Every bill and joint resolution introduced in the 119th Congress, counted by the member who sponsored it. Each mark below is one legislator; select one to see their bills.</p>
+    <h1>Writing more bills barely predicts passing more laws. Writing them with the other party is more common than it looks.</h1>
+    <p id="standfirst">Every bill and joint resolution introduced in the 119th Congress, counted by the
+      member who sponsored it. Each mark below is one legislator; select one to see their bills.</p>
   </section>
 
   <section class="plot-wrap">
@@ -103,8 +107,8 @@
       <button type="button" data-chamber="house" aria-pressed="true">House</button>
       <button type="button" data-chamber="senate" aria-pressed="false">Senate</button>
     </div>
-    <label class="sr-only" for="q"></label>
-    <input id="q" type="search" placeholder="Search by name or state" autocomplete="off">
+    <input id="q" type="search" placeholder="Search by name" autocomplete="off" aria-label="Search members by name">
+    <select id="state" aria-label="Filter by state"><option value="">All states</option></select>
     <div class="seg" role="group" aria-label="Caucus">
       <button type="button" data-caucus="all" aria-pressed="true">All</button>
       <button type="button" data-caucus="D" aria-pressed="false">Democratic</button>
@@ -143,7 +147,7 @@
 
 <script>
 const DATA = "data/site/";
-const state = {chamber:"house", caucus:"all", q:"", bipartisanOnly:false, former:false, sort:"sponsored", dir:-1};
+const state = {chamber:"house", caucus:"all", q:"", stateCode:"", bipartisanOnly:false, former:false, sort:"sponsored", dir:-1};
 const boards = {};
 let meta = null;
 
@@ -151,6 +155,22 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const caucusClass = c => c === "D" ? "d" : c === "R" ? "r" : "i";
 const seat = m => m.chamber === "senate" ? `${m.caucus ?? m.party}-${m.state}` : `${m.caucus ?? m.party}-${m.state}${m.district ? "-" + m.district : ""}`;
 const pct = v => v === null || v === undefined ? "\u2014" : v.toFixed(0) + "%";
+
+const STATE_NAMES = {AL:"Alabama",AK:"Alaska",AS:"American Samoa",AZ:"Arizona",AR:"Arkansas",CA:"California",
+  CO:"Colorado",CT:"Connecticut",DE:"Delaware",DC:"District of Columbia",FL:"Florida",GA:"Georgia",GU:"Guam",
+  HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",
+  MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",
+  NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",
+  ND:"North Dakota",MP:"Northern Mariana Islands",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",
+  PR:"Puerto Rico",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",
+  VT:"Vermont",VI:"Virgin Islands",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming"};
+
+function fillStates(){
+  const codes = [...new Set(Object.values(boards).flat().map(r => r.state))]
+    .sort((a, b) => (STATE_NAMES[a] || a).localeCompare(STATE_NAMES[b] || b));
+  document.getElementById("state").insertAdjacentHTML("beforeend",
+    codes.map(c => `<option value="${c}">${esc(STATE_NAMES[c] || c)} (${c})</option>`).join(""));
+}
 
 async function load(chamber){
   if (!boards[chamber]) boards[chamber] = await (await fetch(DATA + "leaderboard-" + chamber + ".json")).json();
@@ -162,8 +182,9 @@ function visible(rows){
   return rows.filter(r =>
     (state.former || !r.former) &&
     (state.caucus === "all" || r.caucus === state.caucus) &&
+    (!state.stateCode || r.state === state.stateCode) &&
     (!state.bipartisanOnly || r.bipartisanSponsored > 0) &&
-    (!q || r.name.toLowerCase().includes(q) || r.state.toLowerCase() === q || (r.state + (r.district ?? "")).toLowerCase().includes(q))
+    (!q || r.name.toLowerCase().includes(q))
   );
 }
 
@@ -261,6 +282,7 @@ document.querySelectorAll("[data-caucus]").forEach(b => b.addEventListener("clic
   render();
 }));
 document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; render(); });
+document.getElementById("state").addEventListener("change", e => { state.stateCode = e.target.value; render(); });
 document.getElementById("only-bipartisan").addEventListener("change", e => { state.bipartisanOnly = e.target.checked; render(); });
 document.getElementById("show-former").addEventListener("change", e => { state.former = e.target.checked; render(); });
 document.querySelectorAll("thead button[data-sort]").forEach(b => b.addEventListener("click", () => {
@@ -275,7 +297,8 @@ document.querySelectorAll("thead button[data-sort]").forEach(b => b.addEventList
   const d = new Date(meta.dataThrough || meta.generatedAt);
   document.getElementById("asof").textContent =
     `${meta.billsCounted.toLocaleString()} bills and resolutions from ${meta.members} members. Data through ${d.toLocaleDateString(undefined,{month:"long", day:"numeric", year:"numeric"})}.`;
-  await load("house");
+  await Promise.all([load("house"), load("senate")]);
+  fillStates();
   render();
 })();
 </script>
