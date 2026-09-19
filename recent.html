@@ -4,7 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recent activity &middot; What Congress Does</title>
-<meta name="description" content="Bills that moved forward in the 119th Congress: out of committee, passed a chamber, or signed into law.">
+<meta name="description" content="Bills that moved forward in the 119th Congress: out of committee, through a chamber, or signed into law.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#FBFAF7">
+<meta property="og:site_name" content="What Congress Does">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Recent activity - What Congress Does">
+<meta property="og:description" content="Bills that moved forward in the 119th Congress: out of committee, through a chamber, or signed into law.">
+<meta property="og:image" content="https://congress-leaderboard.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Recent activity - What Congress Does">
+<meta name="twitter:description" content="Bills that moved forward in the 119th Congress: out of committee, through a chamber, or signed into law.">
+<meta name="twitter:image" content="https://congress-leaderboard.vercel.app/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet">
@@ -64,7 +78,7 @@
 
 <main class="shell">
   <section class="hero">
-    <h1>What actually moved.</h1>
+    <h1>What actually moved lately.</h1>
     <p>Bills only advance a few ways: out of committee, through a chamber, or into law. Introductions
       are left out, since thousands are filed that never move again.</p>
   </section>
@@ -156,7 +170,7 @@ function eventItem(e){
     <a class="ev-title" href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title)}</a>
     <div class="ev-meta">
       <span><i class="dot ${caucusClass(e.sponsorCaucus)}"></i>
-        <a href="member.html?id=${encodeURIComponent(e.sponsorId)}">${esc(e.sponsorName)}</a></span>
+        <a href="legislator.html?id=${encodeURIComponent(e.sponsorId)}">${esc(e.sponsorName)}</a></span>
       <span>${e.cosponsors} cosponsors${e.crossPartyCosponsors ? ` (${e.crossPartyCosponsors} across the aisle)` : ""}</span>
       ${e.policyArea ? `<span>${esc(e.policyArea)}</span>` : ""}
     </div>

@@ -4,7 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Members &middot; What Congress Does</title>
-<meta name="description" content="Bills sponsored, bills passed, and cross-party support for every member of the 119th Congress.">
+<meta name="description" content="Every member of the 119th Congress by bills sponsored, how far those bills got, and how often they write with the other party.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#FBFAF7">
+<meta property="og:site_name" content="What Congress Does">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Members ranked - What Congress Does">
+<meta property="og:description" content="Every member of the 119th Congress by bills sponsored, how far those bills got, and how often they write with the other party.">
+<meta property="og:image" content="https://congress-leaderboard.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Members ranked - What Congress Does">
+<meta name="twitter:description" content="Every member of the 119th Congress by bills sponsored, how far those bills got, and how often they write with the other party.">
+<meta name="twitter:image" content="https://congress-leaderboard.vercel.app/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet">
@@ -84,7 +98,7 @@
 
 <main class="shell">
   <section class="hero">
-    <h1>Writing more bills barely predicts passing more laws. Writing them with the other party is more common than it looks.</h1>
+    <h1>Even now, writing bills with the other party is common. (Writing bills doesn't mean laws passed, though.)</h1>
     <p id="standfirst">Every bill and joint resolution introduced in the 119th Congress, counted by the
       member who sponsored it. Each mark below is one legislator; select one to see their bills.</p>
   </section>
@@ -205,7 +219,7 @@ function render(){
       <td>${i + 1}</td>
       <td><div class="who">
         <img src="${esc(r.photoUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
-        <div><a href="member.html?id=${encodeURIComponent(r.bioguideId)}">${esc(r.name)}</a>
+        <div><a href="legislator.html?id=${encodeURIComponent(r.bioguideId)}">${esc(r.name)}</a>
         <small><i class="dot ${caucusClass(r.caucus)}"></i> ${esc(seat(r))}${r.former ? ' <span class="former-flag">left office</span>' : ""}</small></div>
       </div></td>
       <td>${r.sponsored}</td>
@@ -237,7 +251,7 @@ function drawPlot(){
   const xTicks = [0, .25, .5, .75, 1].map(f => Math.round(maxX * f));
   const marks = rows.map(r => {
     const cx = x(r.sponsored).toFixed(1), cy = y(r.bipartisanPct).toFixed(1);
-    return `<a class="mark" href="member.html?id=${encodeURIComponent(r.bioguideId)}" tabindex="0"
+    return `<a class="mark" href="legislator.html?id=${encodeURIComponent(r.bioguideId)}" tabindex="0"
       data-name="${esc(r.name)}" data-seat="${esc(seat(r))}" data-s="${r.sponsored}" data-b="${r.bipartisanPct}" data-l="${r.becameLaw}">
       <circle cx="${cx}" cy="${cy}" r="4.2" fill="var(--${r.caucus === "R" ? "rep" : r.caucus === "D" ? "dem" : "ind"})" fill-opacity=".62"></circle>
       <title>${esc(r.name)}</title></a>`;
