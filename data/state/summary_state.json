@@ -1,10 +1,10 @@
 {
  "batchId": null,
  "errors": 0,
- "insufficientText": 80,
+ "insufficientText": 88,
  "pending": {},
- "spendUsd": 12.7729,
+ "spendUsd": 12.7877,
  "submittedAt": null,
- "summarized": 13062,
- "updatedAt": "2026-09-19T13:37:34+00:00"
+ "summarized": 13064,
+ "updatedAt": "2026-09-20T15:59:31+00:00"
 }
