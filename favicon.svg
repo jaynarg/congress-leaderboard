@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="What Congress Does">
-  <rect width="64" height="64" rx="12" fill="#FBFAF7"/>
-  <!-- Thousands filed, narrowing to the few that become law. -->
-  <rect x="12" y="15" width="40" height="8" rx="2" fill="#1C2024"/>
-  <rect x="12" y="28" width="27" height="8" rx="2" fill="#1C2024" opacity=".62"/>
-  <rect x="12" y="41" width="13" height="8" rx="2" fill="#2F7D6F"/>
+  <rect width="64" height="64" rx="12" fill="rgb(196, 155, 58)"/>
+  <rect x="10" y="13" width="44" height="10" rx="2.5" fill="rgb(178, 34, 52)"/>
+  <rect x="10" y="27" width="31" height="10" rx="2.5" fill="rgb(255, 255, 255)" stroke="rgb(120, 92, 30)" stroke-width="1.4"/>
+  <rect x="10" y="41" width="19" height="10" rx="2.5" fill="rgb(60, 59, 110)"/>
 </svg>
