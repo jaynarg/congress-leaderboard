@@ -24,9 +24,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="shared.css">
 <style>
-  .hero{padding:2.5rem 0 1.25rem}
-  .hero h1{font-size:clamp(1.75rem,3.4vw,2.6rem); line-height:1.12; letter-spacing:-.022em; font-weight:800; margin:0 0 .6rem; max-width:22ch}
-  .hero p{margin:0; max-width:62ch; color:var(--muted)}
   .plot-wrap{margin:1.5rem 0 0; background:var(--panel); border:1px solid var(--rule); border-radius:4px; padding:1rem 1rem .5rem}
   .plot-head{display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; align-items:baseline; margin-bottom:.35rem}
   .plot-head h2{font-size:.95rem; margin:0; font-weight:700}
@@ -98,9 +95,9 @@
 
 <main class="shell">
   <section class="hero">
-    <h1>Even now, writing bills with the other party is common. (Writing bills doesn't mean laws passed, though.)</h1>
-    <p id="standfirst">Every bill and joint resolution introduced in the 119th Congress, counted by the
-      member who sponsored it. Each mark below is one legislator; select one to see their bills.</p>
+    <h1>Even now, writing bills with the other party is common.</h1>
+    <p id="standfirst">(Writing bills doesn't mean laws passed, though.) See below for member stats on
+      bill sponsorship and progress, as well as bipartisan activity.</p>
   </section>
 
   <section class="plot-wrap">
@@ -223,7 +220,7 @@ function render(){
         <small><i class="dot ${caucusClass(r.caucus)}"></i> ${esc(seat(r))}${r.former ? ' <span class="former-flag">left office</span>' : ""}</small></div>
       </div></td>
       <td>${r.sponsored}</td>
-      <td><span class="bipar"><span class="bar" aria-hidden="true"><i style="width:${r.bipartisanPct ?? 0}%"></i></span><span class="nums">${r.bipartisanSponsored} <span class="pct">${pct(r.bipartisanPct)}</span></span></span></td>
+      <td><span class="bipar"><span class="bar" aria-hidden="true"><i style="width:${r.bipartisanPct ?? 0}%"></i></span><span class="nums">${pct(r.bipartisanPct)}</span></span></td>
       <td class="hide-sm">${r.reported}</td>
       <td class="hide-sm">${r.passedOneChamber}</td>
       <td>${r.becameLaw}</td>

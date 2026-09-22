@@ -25,8 +25,6 @@
 <link rel="stylesheet" href="shared.css">
 <style>
   main{padding-bottom:1rem}
-  h1{font-size:clamp(1.6rem,3vw,2.3rem); letter-spacing:-.02em; margin:2rem 0 .5rem}
-  .lede{max-width:62ch; color:var(--muted); margin:0 0 2rem}
   h2{font-size:1.05rem; margin:2rem 0 .5rem}
   p,li{max-width:70ch}
   dl{margin:0}
@@ -52,8 +50,10 @@
   </div>
 </header>
 <main class="shell">
-  <h1>How this is measured</h1>
-  <p class="lede">Every number here comes from the Congress.gov API, published by the Library of Congress, and is recomputed nightly. Nothing is hand-entered or editorially weighted.</p>
+  <section class="hero">
+    <h1>How this is measured</h1>
+    <p>Every number here comes from the Congress.gov API, published by the Library of Congress, and is recomputed nightly. Nothing is hand-entered or editorially weighted.</p>
+  </section>
 
   <h2>What counts as a bill</h2>
   <p>Rankings count bills and joint resolutions (HR, S, HJRES, SJRES), which are the measures that can become law. Simple and concurrent resolutions, which mostly express sentiment or handle internal chamber business, appear on member pages but are kept out of the rankings so that commemorative measures don't inflate a total.</p>
