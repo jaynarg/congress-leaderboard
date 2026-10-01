@@ -1,51 +1,10 @@
 {
- "batchId": "msgbatch_01KncUhjnj7srpd1KmWneFVj",
+ "batchId": null,
  "errors": 0,
- "insufficientText": 157,
- "pending": {
-  "hconres-44": {
-   "number": "44",
-   "textVersionDate": "2025-07-16T04:00:00Z",
-   "type": "hconres"
-  },
-  "hr-3001": {
-   "number": "3001",
-   "textVersionDate": "2025-04-24T04:00:00Z",
-   "type": "hr"
-  },
-  "hr-4873": {
-   "number": "4873",
-   "textVersionDate": "2025-08-05T04:00:00Z",
-   "type": "hr"
-  },
-  "hr-8840": {
-   "number": "8840",
-   "textVersionDate": "2026-05-14T04:00:00Z",
-   "type": "hr"
-  },
-  "hr-9358": {
-   "number": "9358",
-   "textVersionDate": "2026-06-18T04:00:00Z",
-   "type": "hr"
-  },
-  "hres-1020": {
-   "number": "1020",
-   "textVersionDate": "2026-01-27T05:00:00Z",
-   "type": "hres"
-  },
-  "s-5066": {
-   "number": "5066",
-   "textVersionDate": "2026-07-22T04:00:00Z",
-   "type": "s"
-  },
-  "s-5600": {
-   "number": "5600",
-   "textVersionDate": "2026-09-29T04:00:00Z",
-   "type": "s"
-  }
- },
- "spendUsd": 12.9115,
- "submittedAt": "2026-09-30T16:24:33+00:00",
- "summarized": 13093,
- "updatedAt": "2026-09-30T17:04:46+00:00"
+ "insufficientText": 171,
+ "pending": {},
+ "spendUsd": 12.9321,
+ "submittedAt": null,
+ "summarized": 13094,
+ "updatedAt": "2026-10-01T17:09:28+00:00"
 }
